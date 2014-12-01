@@ -11,8 +11,11 @@ var util = require('util');
 var _ = require('lodash');
 
 module.exports = {
+  _config: {
+    rest: false
+  },
 
-  list: function (req,res) {
+  find: function findRecords(req,res) {
     if(!req.isAuthenticated()) return res.forbidden('forbidden');
 
     var uid = req.param('uid');
