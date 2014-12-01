@@ -34,13 +34,17 @@ module.exports.routes = {
       action        : 'start'
   },
 
-  // TODO use sails.js blueprint for set routes
-  'get /api/v1/message/:id?': {
-      controller    : 'message',
-      action        : 'find'
+  'get /message': {
+    controller    : 'message',
+    action        : 'find'
   },
 
-  'post /api/v1/message': {
+  'get /message/:id': {
+    controller    : 'message',
+    action        : 'findOne'
+  },
+
+  'post /message': {
       controller    : 'message',
       action        : 'createRecord'
   },

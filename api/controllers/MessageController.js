@@ -64,6 +64,32 @@ module.exports = {
     });
   },
 
+  findOne: function(req, res, next) {
+    if(!req.isAuthenticated()) return res.forbidden('forbidden');
+
+    var id = req.param('id');
+
+    if (!id || !Number(id)) return next();
+
+    req._sails.models.message.findOneById(id)
+    .exec(function (err, message) {
+      // Error handling
+      if (err) {
+        req._sails.log.error('messenger:findOne:Error on get message from db', err);
+        return res.negotiate(err);
+      }
+
+      if ( (message.toId != req.user.id) && (message.fromid != req.user.id) ) {
+        // dont are to or from id
+        return res.forbidden('forbidden');
+      }
+
+      return res.send({
+        message: message
+      });
+    });
+  },
+
   /**
    * Return last messages between logged in user and :uid user
    */
@@ -104,7 +130,6 @@ module.exports = {
       }
     });
   },
-
 
   /**
    * Return last messages between logged in user and :uid user
@@ -289,7 +314,7 @@ module.exports = {
     if(!req.isAuthenticated()) return res.forbidden('forbidden');
 
     // Look up the model
-    var Model = Message;
+    var Model = req._sails.models.message;
 
     // Locate and validate the required `id` parameter.
     var pk = actionUtil.requirePk(req);
@@ -311,7 +336,7 @@ module.exports = {
     // (Note: this could be achieved in a single query, but a separate `findOne`
     //  is used first to provide a better experience for front-end developers
     //  integrating with the blueprint API.)
-    Model.findOne(pk).populateAll().exec(function found(err, matchingRecord) {
+    Model.findOne(pk).exec(function found(err, matchingRecord) {
 
       if (err) return res.serverError(err);
       if (!matchingRecord) return res.notFound();
