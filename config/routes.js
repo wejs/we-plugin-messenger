@@ -30,18 +30,26 @@ module.exports.routes = {
   //  -- MESSENGER
 
   'get /messenger/start': {
-      controller    : 'message',
-      action        : 'start'
+    controller    : 'message',
+    action        : 'start'
   },
 
   'get /message': {
     controller    : 'message',
-    action        : 'find'
+    action        : 'find',
+    model: 'message'
+  },
+
+  'put /message/:id': {
+    controller    : 'message',
+    action        : 'update',
+    model: 'message'
   },
 
   'get /message/:id': {
     controller    : 'message',
-    action        : 'findOne'
+    action        : 'findOne',
+    model: 'message'
   },
 
   'post /message': {

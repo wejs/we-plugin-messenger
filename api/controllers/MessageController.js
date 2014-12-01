@@ -22,7 +22,9 @@ module.exports = {
 
     var query ;
 
-    if(uid){
+    if (uid) {
+      if (!Number(uid)) return res.badRequest(); // invalid uid
+
       query = {
         where: {
           or: [
@@ -47,8 +49,9 @@ module.exports = {
       };
     }
 
-    Message.find(query)
+    req._sails.models.message.find(query)
     .limit(15)
+    .skip( actionUtil.parseSkip(req) )
     .sort('createdAt DESC')
     .exec(function(err, messages) {
       // Error handling
@@ -64,7 +67,7 @@ module.exports = {
     });
   },
 
-  findOne: function(req, res, next) {
+  findOne: function findOneRecord(req, res, next) {
     if(!req.isAuthenticated()) return res.forbidden('forbidden');
 
     var id = req.param('id');
@@ -304,7 +307,7 @@ module.exports = {
           }
         );
 
-        return res.ok({message: newMessage});
+        return res.ok(newMessage);
       });
     });
 
@@ -360,24 +363,20 @@ module.exports = {
 
         var updatedRecord = records[0];
 
-        if ( updatedRecord.toId && req.isSocket) {
-          // to contact message
-          var socketRoomName = 'user_' + updatedRecord.fromId;
-          // if has toId send the message in sails.js default responde format
-          sails.io.sockets.in(socketRoomName).emit(
-            'message',
-            {
-              id: updatedRecord.id,
-              verb: 'updated',
-              data: updatedRecord
-            }
-          );
+        // to contact message
+        var socketRoomName = 'user_' + updatedRecord.fromId;
+        // if has toId send the message in sails.js default responde format
+        req._sails.io.sockets.in(socketRoomName).emit(
+          'message',
+          {
+            id: updatedRecord.id,
+            verb: 'updated',
+            data: updatedRecord
+          }
+        );
 
-        } else {
-          // public room
-          res.ok({message: updatedRecord});
-        }
-
+        // public room
+        res.ok(updatedRecord);
       });// </updated>
     }); // </found>
   },
