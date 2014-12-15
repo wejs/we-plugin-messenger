@@ -269,7 +269,7 @@ module.exports = {
             message: newMessage
           }
         );
-        return res.send(newMessage);
+        return res.ok(newMessage);
       });
     }
 
