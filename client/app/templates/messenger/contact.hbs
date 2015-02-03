@@ -1,0 +1,9 @@
+<li {{bind-attr class=contactClass}}>
+  <a {{action "startTalk" this}} >
+    <span class="avatar-small">{{we-avatar userId=contactUser.id}}</span>
+    {{#if isOnline}}
+      <span class="contact-status"><img src="/core/images/connected.png"></span>
+    {{/if}}
+    {{contactUser.displayName}}
+  </a>
+</li>

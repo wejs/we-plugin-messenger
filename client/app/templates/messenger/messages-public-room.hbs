@@ -1,0 +1,5 @@
+<div scrollto="bottom" id="messengerBox-public" class="messages">
+  {{#each}}
+    {{render 'messenger/message-room' this controller="MessengerMessage"}}
+  {{/each}}
+</div>

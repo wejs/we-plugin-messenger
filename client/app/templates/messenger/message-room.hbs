@@ -1,0 +1,11 @@
+<div {{bind-attr class=messageClass}} >
+  <span class="avatar-small">{{we-avatar userId=fromId.id}}</span>
+  <small>{{fromId.username}}</small>
+  <span class="message">{{content.content}}</span>
+  <div class="message-footer">
+    <span class="createdAt">
+      {{format-date createdAt}}
+    </span>
+  </div>
+</div>
+
