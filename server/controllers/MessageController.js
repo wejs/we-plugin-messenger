@@ -167,9 +167,9 @@ module.exports = {
    * Start messenger / loggin in messenger
    */
   start: function startMessenger(req, res){
-    if(!req.isAuthenticated()) return res.forbidden('forbidden');
+    if( !req.isAuthenticated() ) return res.forbidden('forbidden');
 
-    if (!req.isSocket) {
+    if ( !req.isSocket ) {
       sails.log.warn('Start messenger without socket.io not is implemented',req.user.id);
       return res.badRequest();
     }
@@ -178,16 +178,20 @@ module.exports = {
     var user = req.user;
     var socket = req.socket;
 
-    if(typeof sails.onlineusers === 'undefined' )
+    socket.userId = userId;
+
+    if( typeof sails.onlineusers === 'undefined' )
       sails.onlineusers = {};
 
     // save user data in online users cache
-    if(typeof sails.onlineusers[userId] === 'undefined' ){
+    if( typeof sails.onlineusers[userId] === 'undefined' ){
       user.messengerStatus = 'online';
+
+      if ( user.toJSON ) user = user.toJSON();
 
       // save a the new socket connected on links users
       sails.onlineusers[userId] = {
-        user: user.toJSON(),
+        user: user,
         sockets: []
       };
 
@@ -216,7 +220,15 @@ module.exports = {
     // TODO make this dynamic and per user configurable
     socket.join('public');
 
-    res.send(200, req.user);
+    // Fetch all online to send as response
+    var usersOnline = _.reduce( sails.onlineusers, function (prev, onlineUser){
+      if ( onlineUser.sockets.length && ( req.user.id !== onlineUser.user.id ) ) {
+        return prev.concat([onlineUser.user]);
+      }
+      return prev;
+    }, []);    
+
+    res.send(200, { user: req.user, usersOnline: usersOnline });
   },
 
   /**
@@ -248,7 +260,7 @@ module.exports = {
    * @requires User authenticated
    */
   createRecord: function (req, res) {
-    if(!req.isAuthenticated()) return res.forbidden('forbidden');
+    if( !req.isAuthenticated() ) return res.forbidden('forbidden');
 
     var message = {};
     message.content = req.param('content');
@@ -256,7 +268,7 @@ module.exports = {
     message.toId = req.param('toId');
 
     // public message
-    if (!message.toId) {
+    if ( !message.toId ) {
       return Message.create(message).exec(function (error, newMessage){
         if (error) {
           console.log(error);
@@ -274,42 +286,43 @@ module.exports = {
     }
 
     // to contact message
-    return Contact.getUsersRelationship(message.fromId, message.toId, function(err, contact) {
-      if (err) {
-        sails.log.error('CreateMessage:Contact.getUsersRelationship:', err);
+    // return Contact.getUsersRelationship(message.fromId, message.toId, function(err, contact) {
+    // if (err) {
+    //   sails.log.error('CreateMessage:Contact.getUsersRelationship:', err);
+    //   return res.serverError();
+    // }
+
+    // // user dont are one contact
+    // if (!contact || ( contact.status !== 'accepted' ) ) {
+    //   return res.forbidden();
+    // }
+
+    Message.create(message)
+    .exec(function createMessageToContact(error, newMessage) {
+      if (error) {
+        sails.log.error('createMessageToContact:', error);
         return res.serverError();
       }
 
-      // user dont are one contact
-      if (!contact || ( contact.status !== 'accepted' ) ) {
-        return res.forbidden();
-      }
+      // // set contact id in new message to help update or open
+      // // contact box on client side
+      // newMessage.contactId = contact.id;
 
-      Message.create(message)
-      .exec(function createMessageToContact(error, newMessage) {
-        if (error) {
-          sails.log.error('createMessageToContact:', error);
-          return res.serverError();
+      var socketRoomName = 'user_' + newMessage.toId;
+
+      // if has toId send the message in sails.js default responde format
+      sails.io.sockets.in(socketRoomName).emit(
+        'receive:message',
+        {
+          id: newMessage.id,
+          verb: 'created',
+          message: newMessage
         }
+      );
 
-        // set contact id in new message to help update or open
-        // contact box on client side
-        newMessage.contactId = contact.id;
-
-        var socketRoomName = 'user_' + newMessage.toId;
-        // if has toId send the message in sails.js default responde format
-        sails.io.sockets.in(socketRoomName).emit(
-          'message',
-          {
-            id: newMessage.id,
-            verb: 'created',
-            data: newMessage
-          }
-        );
-
-        return res.ok(newMessage);
-      });
+      return res.ok(newMessage);
     });
+    // });
 
   },
 

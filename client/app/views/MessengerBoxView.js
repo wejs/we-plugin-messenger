@@ -8,7 +8,7 @@ App.MessengerBoxView = Ember.View.extend({
   didInsertElement: function(){
     var boxId = this.get('boxId');
 
-    this.$('.contact-chat').focus();
+    this.$('input').focus();
 
     this.$('.contact-chat').on('focusin', $.proxy(this.focusIn,this) );
     this.$('.contact-chat').on('focusout', $.proxy(this.focusOut,this) );

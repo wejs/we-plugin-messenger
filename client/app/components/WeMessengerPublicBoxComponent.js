@@ -20,6 +20,12 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
     we.events.on('weMessengerOpenPublicBox', function() {
       self.send('openList');
     });
+
+    we.events.on('weMessengerPublicMessageReceived', function (newMessage){
+      self.get('store').pushPayload('message', {
+        message: newMessage.message
+      });      
+    });    
   },
 
   scrollToBottom: function scrollToBottom() {
@@ -44,6 +50,18 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
       }
     },
 
+    // openList: function openList() {
+    //   this.set('messages', this.get('store').filter('message', function (message) {
+    //     if (!Ember.get(message, 'toId.content')) {
+    //       return true;
+    //     }
+    //     return false;
+    //   }));
+
+    //   this.set('isVisible', true);
+    //   this.scrollToBottom();
+    // }.observes('messages'),
+
     openList: function openList() {
       this.set('messages', this.get('store').filter('message', function (message) {
         if (!Ember.get(message, 'toId.content')) {
@@ -54,7 +72,8 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
 
       this.set('isVisible', true);
       this.scrollToBottom();
-    }.observes('messages'),
+    }.observes('messages'),    
+
     closeList: function closeList() {
     
       // set a filter to list connected users
@@ -73,6 +92,11 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
     sendMessage: function sendOnePublicMessage() {
       var self = this;
 
+      // if is empty messageNew ...
+      if( !this.get('messageNew') ){
+        return;
+      }
+
       var messageObj = {};
       messageObj.content = this.get('messageNew');
       messageObj.toId = null;
@@ -85,7 +109,7 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
       message.set('fromId', App.currentUser);
       message.save().then(function() {
         self.set('messageNew', '');
-         self.scrollToBottom();
+        self.scrollToBottom();
       })
     },
 
