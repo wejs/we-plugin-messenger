@@ -24,7 +24,10 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
     we.events.on('weMessengerPublicMessageReceived', function (newMessage){
       self.get('store').pushPayload('message', {
         message: newMessage.message
-      });      
+      });
+      if ( self.get('isScrolled') ) {
+        self.scrollToBottom();        
+      }
     });    
   },
 
@@ -41,14 +44,14 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
 
   actions: {
 
-    onScroll: function onScroll () {
-      var element = this.$( this.get('messagesElementSelector') );
-      if(( element[0].scrollHeight - element.scrollTop() == element.outerHeight() ) ){
-        this.set('isScrolled', false);
-      } else {
-        this.set('isScrolled', true);
-      }
-    },
+    // onScroll: function onScroll () {
+    //   var element = this.$( this.get('messagesElementSelector') );
+    //   if(( element[0].scrollHeight - element.scrollTop() == element.outerHeight() ) ){
+    //     this.set('isScrolled', false);
+    //   } else {
+    //     this.set('isScrolled', true);
+    //   }
+    // },
 
     // openList: function openList() {
     //   this.set('messages', this.get('store').filter('message', function (message) {
@@ -61,6 +64,10 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
     //   this.set('isVisible', true);
     //   this.scrollToBottom();
     // }.observes('messages'),
+    scrollAtTop: function scrollAtTop() {
+      // body...
+      // alert('ScrollAtTop');
+    },
 
     openList: function openList() {
       this.set('messages', this.get('store').filter('message', function (message) {
@@ -72,7 +79,7 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
 
       this.set('isVisible', true);
       this.scrollToBottom();
-    }.observes('messages'),    
+    },
 
     closeList: function closeList() {
     
@@ -121,5 +128,21 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
     getMessagesPublic: function getMessagesPublic() {
       this.store.find('message');
     }
+  },
+
+  didInsertElement: function () {
+    var self = this;
+    var messageArea = this.$(this.get('messagesElementSelector'));
+    messageArea.scroll( function () {      
+        if ( messageArea[0].scrollHeight - messageArea.scrollTop() == messageArea.height() ){
+          return self.set('isScrolled', true); 
+        }
+
+        self.set('isScrolled', false);
+
+        if ( messageArea.scrollTop() === 0 ){
+          self.send('scrollAtTop');
+        }
+    });
   }
 });
