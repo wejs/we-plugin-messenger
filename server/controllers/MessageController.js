@@ -50,19 +50,31 @@ module.exports = {
     }
 
     req._sails.models.message.find(query)
-    .limit(15)
+    .limit( actionUtil.parseLimit(req) )
     .skip( actionUtil.parseSkip(req) )
     .sort('createdAt DESC')
     .exec(function(err, messages) {
       // Error handling
-      if (err) {
+      if ( err ) {
         sails.log.error('messenger:list:Error on get messages from db', err);
         return res.negotiate(err);
       }
 
-      return res.send({
-        message: messages
-      });
+
+      req._sails.models.message.count(query)
+      .exec(function (err, count){
+        if ( err ) {
+          sails.log.error('messenger::count:Error on count messages from db', err);
+          return res.negotiate(err);
+        }
+
+        return res.send({
+          message: messages,
+          meta: {
+            count: count
+          }
+        });
+      })
 
     });
   },

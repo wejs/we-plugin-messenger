@@ -21,27 +21,33 @@
 
       </div>
 
-      <div {{bind-attr class=isListOpen}}>
-        {{render 'messenger/messages' messages id=boxId }}
+      {{#if isListOpen}}
+        <div>
+          {{#if isLoading}}
+            <span><img src="/core/images/loading.gif"></span>
+          {{/if}}
 
-        {{#if isWriting}}
-          <div class="contact is-writing">
-            {{!-- {{we-avatar userId=contactUser.id width="20px"}} --}}
-            {{user-avatar user=this}}
-            <span class="small is-writing-text">{{t 'messenger.contact.writing'}}</span>
-          </div>
-        {{/if}}
-        <div class="footer">
-          <form {{action "sendMessage" on="submit"}} method="post">
-            <div class="input-group">
-              {{input name="messageNew" value=messageNew  type="text" placeholder=messagePlaceholder classNames="input-xs"}}
-              <span class="input-group-btn">
-                <button  {{action "sendMessage"}} class="btn btn-xs btn-primary" type="submit">{{t "Send"}}</button>
-              </span>
+          {{render 'messenger/messages' messages id=boxId }}
+
+          {{#if isWriting}}
+            <div class="contact is-writing">
+              {{!-- {{we-avatar userId=contactUser.id width="20px"}} --}}
+              {{user-avatar user=this}}
+              <span class="small is-writing-text">{{t 'messenger.contact.writing'}}</span>
             </div>
-          </form>
+          {{/if}}
+          <div class="footer">
+            <form {{action "sendMessage" on="submit"}} method="post">
+              <div class="input-group">
+                {{input name="messageNew" value=messageNew  type="text" placeholder=messagePlaceholder classNames="input-xs"}}
+                <span class="input-group-btn">
+                  <button  {{action "sendMessage"}} class="btn btn-xs btn-primary" type="submit">{{t "Send"}}</button>
+                </span>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      {{/if}}
 
     </div>
   </div>

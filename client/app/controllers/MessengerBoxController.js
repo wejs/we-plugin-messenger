@@ -3,7 +3,7 @@ App.MessengerBoxController = Ember.ObjectController.extend({
   messageNew: '',
   contact: {},
   messages: [],
-  isListOpen: 'show', // show | close
+  isListOpen: true, // show | close
   //flags
   isVisible: true,
   isWriting: false,
@@ -22,6 +22,10 @@ App.MessengerBoxController = Ember.ObjectController.extend({
   hasNews: false,
   hasFocus: false,
   isStarted: false,
+
+  count: null,
+  limit: 15,
+  page: 1,
 
   // element with messages and scrollbar
   messagesElementSelector: '.messages',
@@ -46,15 +50,15 @@ App.MessengerBoxController = Ember.ObjectController.extend({
 
   goToBottomTimeOut: null,
 
-  goToBottomOnUpdate: function() {
-    if (!this.get('isScrolled')) {
-      this.send('scrollToBottom');
-    }
+  // goToBottomOnUpdate: function() {
+  //   if (!this.get('isScrolled')) {
+  //     this.send('scrollToBottom');
+  //   }
 
-    if(this.get('isStarted') && !this.get('hasFocus')) {
-      this.set('hasNews', true);
-    }
-  }.observes('messages.@each'),
+  //   if(this.get('isStarted') && !this.get('hasFocus')) {
+  //     this.set('hasNews', true);
+  //   }
+  // }.observes('messages.@each'),
 
   sendIsWriting: function() {
     if( this.get('messageNew').trim() ) {
@@ -80,7 +84,7 @@ App.MessengerBoxController = Ember.ObjectController.extend({
     var contactId = self.get('model.id');
 
     if( contactId ) {
-      this.send('getMessagesWithUser');
+      this.getMessagesWithUser();
     }
 
     /**
@@ -91,25 +95,25 @@ App.MessengerBoxController = Ember.ObjectController.extend({
         // check if are a message to authenticated user
         // form contact user id
         if(
-          message.get('toId.id') == App.currentUser.id &&
-          message.get('fromId.id') == contactId
+          message.get('toId.id') === App.currentUser.id &&
+          message.get('fromId.id') === contactId
         ) {
           return true;
         }
         // check if are a message from authenticated user
         // to box user id
         if(
-          message.get('fromId.id') == App.currentUser.id &&
-          message.get('toId.id') == contactId
+          message.get('fromId.id') === App.currentUser.id &&
+          message.get('toId.id') === contactId
         ) {
           return true;
         }
         return false;
       }
     ).then(function (messages){
-      // console.log('Array', Em.A(messages));
-      self.set('messages', Em.A(messages.get('content')));
-    })
+      self.set('messages', messages);
+      self.send('scrollToBottom');
+    });
 
     /**
      * Receive a user is writing notification
@@ -122,12 +126,12 @@ App.MessengerBoxController = Ember.ObjectController.extend({
     var self = this;
 
     if (data.user && data.user.id) {
-      if ( this.get('contactUserId') == data.user.id && !this.get('isWriting')) {
-
+      if ( Number( this.get('model.id') ) === data.user.id && !this.get('isWriting') ) {
         // set one delay for re-send this event
-        self.set('isWriting', setTimeout(function isWritingTime(){
+        self.set('isWriting', true);
+        setTimeout(function isWritingTime(){
           self.set('isWriting', false);
-        }, self.get('isContactWritingTime')));
+        }, self.get('isContactWritingTime'));
       }
     }
   },
@@ -137,7 +141,43 @@ App.MessengerBoxController = Ember.ObjectController.extend({
     io.socket.removeListener('user:writing', this.onContactWriting.bind(this));
   },
 
+  /**
+   * Get messages how authenticated user has did with user id
+   */
+  getMessagesWithUser: function messagesWithUser(){
+    var self = this;
+
+    self.set('isLoading', true);
+    var id = self.get('model.id');
+
+    return self.get('store').find('message', {
+      uid: id,
+      limit: this.get('limit'), 
+      skip: ( this.get('page') - 1 ) * this.get('limit')        
+    }).then(function (privateMessages) {
+      if ( privateMessages && privateMessages.meta ) {
+        self.set('count', privateMessages.meta.count);
+      }
+
+      self.set('isLoading', false);  
+      self.set('isStarted', true);        
+    });
+  },   
+
   actions: {
+    scrollAtTop: function (messageArea, previousHeight){
+      var self = this;
+      if ( this.get('messages.length') < this.get('count') ) {
+        this.incrementProperty('page');
+        // this.send('getMessagesPublic');
+        this.getMessagesWithUser().then(function (){
+          Ember.run.scheduleOnce('afterRender', self, function() {
+            messageArea.scrollTop( messageArea[0].scrollHeight - previousHeight );
+          });
+        });
+      }
+    },
+
     lockScroll: function lockScroll (flag) {
       this.set('isScrolled', flag);
     },
@@ -161,7 +201,7 @@ App.MessengerBoxController = Ember.ObjectController.extend({
       messages.forEach(function(message){
         if ( !message.get('read') ) {
           // only mark as read messages how you received
-          if( message.get('fromId.id') != App.currentUser.id) {
+          if( message.get('fromId.id') !== App.currentUser.id) {
             message.set('read', true);
             message.save();
           }
@@ -178,12 +218,7 @@ App.MessengerBoxController = Ember.ObjectController.extend({
     },
 
     toggleList: function(){
-      if(this.get('isListOpen') === 'hide'){
-        this.set('isListOpen', 'show');
-      }else{
-        this.set('isListOpen', 'hide');
-      }
-      this.send('scrollToBottom');
+      this.toggleProperty('isListOpen');
     },
 
     scrollToBottom: function(){
@@ -196,22 +231,6 @@ App.MessengerBoxController = Ember.ObjectController.extend({
           element.scrollTop(element.prop('scrollHeight'));
         }
       }, 10);
-    },
-
-    /**
-     * Get messages how authenticated user has did with user id
-     */
-    getMessagesWithUser: function messagesWithUser(){
-      var self = this;
-
-      var id = self.get('model.id');
-
-      self.get('store').find('message', {
-        uid: id
-      }).then(function () {
-        self.set('isStarted', true);
-        self.send('scrollToBottom');
-      });
     },
 
     sendMessage: function sendMessageToContact(){
