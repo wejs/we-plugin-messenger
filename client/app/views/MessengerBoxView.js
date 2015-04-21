@@ -16,15 +16,15 @@ App.MessengerBoxView = Ember.View.extend({
     var messageArea = this.$('.messages');
     messageArea.scroll( function () {
         if ( messageArea[0].scrollHeight - messageArea.scrollTop() === messageArea.height() ){
-          return self.get('controller').send('lockScroll', true); 
+          return self.get('controller').send('lockScroll', false);
         }
 
-        self.get('controller').send('lockScroll', false);
+        self.get('controller').send('lockScroll', true);
 
         if ( messageArea.scrollTop() === 0 ){
           self.get('controller').send('scrollAtTop', messageArea, messageArea[0].scrollHeight);
         }
-    });    
+    });   
   },
 
   willDestroyElement: function(){

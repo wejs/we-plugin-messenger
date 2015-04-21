@@ -30,13 +30,6 @@ App.MessengerBoxController = Ember.ObjectController.extend({
   // element with messages and scrollbar
   messagesElementSelector: '.messages',
 
-  // isOnline: function(){
-  //   if( this.get('model.onlineStatus') == 'online' ) {
-  //     return true;
-  //   }
-  //   return false;
-  // }.property('model.onlineStatus'),
-
   isOnline: function(){
     if( this.get('model.messengerStatus') == 'online' ) {
       return true;
@@ -50,15 +43,15 @@ App.MessengerBoxController = Ember.ObjectController.extend({
 
   goToBottomTimeOut: null,
 
-  // goToBottomOnUpdate: function() {
-  //   if (!this.get('isScrolled')) {
-  //     this.send('scrollToBottom');
-  //   }
+  goToBottomOnUpdate: function() {
+    if (!this.get('isScrolled')) {
+      this.send('scrollToBottom');
+    }
 
-  //   if(this.get('isStarted') && !this.get('hasFocus')) {
-  //     this.set('hasNews', true);
-  //   }
-  // }.observes('messages.@each'),
+    if(this.get('isStarted') && !this.get('hasFocus')) {
+      this.set('hasNews', true);
+    }
+  }.observes('messages.@each'),
 
   sendIsWriting: function() {
     if( this.get('messageNew').trim() ) {
@@ -67,24 +60,17 @@ App.MessengerBoxController = Ember.ObjectController.extend({
 
   }.observes('messageNew'),
 
-  // contactUserId: function() {
-  //   if (this.get('to.id') != App.currentUser.id ) {
-  //     return this.get('to.id') ;
-  //   }
-  //   // check if are a message from authenticated user
-  //   // to box user id
-  //   if (this.get('from.id') != App.currentUser.id) {
-  //     return this.get('from.id');
-  //   }
-  // }.property('contact'),
-
   init: function() {
     this._super();
     var self = this;
     var contactId = self.get('model.id');
 
     if( contactId ) {
-      this.getMessagesWithUser();
+      this.getMessagesWithUser().then(function (){
+        Ember.run.scheduleOnce('afterRender', self, function() {
+          this.send('scrollToBottom');
+        });
+      });
     }
 
     /**
@@ -112,7 +98,6 @@ App.MessengerBoxController = Ember.ObjectController.extend({
       }
     ).then(function (messages){
       self.set('messages', messages);
-      self.send('scrollToBottom');
     });
 
     /**
