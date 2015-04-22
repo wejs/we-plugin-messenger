@@ -6,12 +6,25 @@ App.MessengerBoxView = Ember.View.extend({
   attributeBindings: ['tabindex'],
 
   didInsertElement: function(){
-    var boxId = this.get('boxId');
+    var self = this;
 
-    this.$('.contact-chat').focus();
+    this.$('input').focus();
 
     this.$('.contact-chat').on('focusin', $.proxy(this.focusIn,this) );
     this.$('.contact-chat').on('focusout', $.proxy(this.focusOut,this) );
+
+    var messageArea = this.$('.messages');
+    messageArea.scroll( function () {
+        if ( messageArea[0].scrollHeight - messageArea.scrollTop() === messageArea.height() ){
+          return self.get('controller').send('lockScroll', false);
+        }
+
+        self.get('controller').send('lockScroll', true);
+
+        if ( messageArea.scrollTop() === 0 ){
+          self.get('controller').send('scrollAtTop', messageArea, messageArea[0].scrollHeight);
+        }
+    });   
   },
 
   willDestroyElement: function(){

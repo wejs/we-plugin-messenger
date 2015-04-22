@@ -12,14 +12,27 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
   // element with messages and scrollbar
   messagesElementSelector: '.messages',
 
+  count: null,
+  limit: 15,
+  page: 1,
+
   init: function() {
     this._super();
     var self = this;
-    this.send('getMessagesPublic');
+    this.getMessagesPublic();
     // open and shown public box
     we.events.on('weMessengerOpenPublicBox', function() {
       self.send('openList');
     });
+
+    we.events.on('weMessengerPublicMessageReceived', function (newMessage){
+      self.get('store').pushPayload('message', {
+        message: newMessage.message
+      });
+      if ( self.get('isScrolled') ) {
+        self.scrollToBottom();        
+      }
+    });    
   },
 
   scrollToBottom: function scrollToBottom() {
@@ -35,12 +48,38 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
 
   actions: {
 
-    onScroll: function onScroll () {
-      var element = this.$( this.get('messagesElementSelector') );
-      if(( element[0].scrollHeight - element.scrollTop() == element.outerHeight() ) ){
-        this.set('isScrolled', false);
-      } else {
-        this.set('isScrolled', true);
+    // onScroll: function onScroll () {
+    //   var element = this.$( this.get('messagesElementSelector') );
+    //   if(( element[0].scrollHeight - element.scrollTop() == element.outerHeight() ) ){
+    //     this.set('isScrolled', false);
+    //   } else {
+    //     this.set('isScrolled', true);
+    //   }
+    // },
+
+    // openList: function openList() {
+    //   this.set('messages', this.get('store').filter('message', function (message) {
+    //     if (!Ember.get(message, 'toId.content')) {
+    //       return true;
+    //     }
+    //     return false;
+    //   }));
+
+    //   this.set('isVisible', true);
+    //   this.scrollToBottom();
+    // }.observes('messages'),
+
+    scrollAtTop: function scrollAtTop(previousHeight) {
+      var self = this;
+      if ( this.get('messages.length') < this.get('count') ) {
+        this.incrementProperty('page');
+        // this.send('getMessagesPublic');
+        this.getMessagesPublic().then(function (){
+          Ember.run.scheduleOnce('afterRender', self, function() {
+            var messageArea = this.$( this.get('messagesElementSelector') );
+            messageArea.scrollTop( messageArea[0].scrollHeight - previousHeight );
+          });
+        });
       }
     },
 
@@ -54,7 +93,8 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
 
       this.set('isVisible', true);
       this.scrollToBottom();
-    }.observes('messages'),
+    },
+
     closeList: function closeList() {
     
       // set a filter to list connected users
@@ -68,10 +108,14 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
       } else {
         this.set('isListOpen', true);
       }
-      this.scrollToBottom();
     },
     sendMessage: function sendOnePublicMessage() {
       var self = this;
+
+      // if is empty messageNew ...
+      if( !this.get('messageNew') ){
+        return;
+      }
 
       var messageObj = {};
       messageObj.content = this.get('messageNew');
@@ -85,17 +129,64 @@ App.WeMessengerPublicBoxComponent = Ember.Component.extend({
       message.set('fromId', App.currentUser);
       message.save().then(function() {
         self.set('messageNew', '');
-         self.scrollToBottom();
+        self.scrollToBottom();
       })
     },
 
-    /**
-     * Get one list of public messages
-     *
-     * @param  {Function} callback runs after the server response with callback(err, response)
-     */
-    getMessagesPublic: function getMessagesPublic() {
-      this.store.find('message');
-    }
+    // /**
+    //  * Get one list of public messages
+    //  *
+    //  * @param  {Function} callback runs after the server response with callback(err, response)
+    //  */
+    // getMessagesPublic: function getMessagesPublic() {
+    //   var self = this;
+    //   self.set('isLoading', true);
+
+    //   return this.store.find('message', {
+    //     limit: this.get('limit'), 
+    //     skip: ( this.get('page') - 1 ) * this.get('limit')
+    //   }).then(function (publicMessages){
+    //     if ( publicMessages && publicMessages.meta ) {
+    //       self.set('count', publicMessages.meta.count);
+    //     }
+    //     self.set('isLoading', false);
+    //   });
+    // }
+  },
+
+  /**
+   * Get one list of public messages
+   *
+   * @param  {Function} callback runs after the server response with callback(err, response)
+   */
+  getMessagesPublic: function getMessagesPublic() {
+    var self = this;
+    self.set('isLoading', true);
+
+    return this.store.find('message', {
+      limit: this.get('limit'), 
+      skip: ( this.get('page') - 1 ) * this.get('limit')
+    }).then(function (publicMessages){
+      if ( publicMessages && publicMessages.meta ) {
+        self.set('count', publicMessages.meta.count);
+      }
+      self.set('isLoading', false);
+    });
+  },  
+
+  didInsertElement: function () {
+    var self = this;
+    var messageArea = this.$(this.get('messagesElementSelector'));
+    messageArea.scroll( function () {      
+        if ( messageArea[0].scrollHeight - messageArea.scrollTop() === messageArea.height() ){
+          return self.set('isScrolled', true); 
+        }
+
+        self.set('isScrolled', false);
+
+        if ( messageArea.scrollTop() === 0 ){
+          self.send('scrollAtTop', messageArea[0].scrollHeight);
+        }
+    });
   }
 });

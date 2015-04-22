@@ -3,7 +3,7 @@ App.MessengerBoxController = Ember.ObjectController.extend({
   messageNew: '',
   contact: {},
   messages: [],
-  isListOpen: 'show', // show | close
+  isListOpen: true, // show | close
   //flags
   isVisible: true,
   isWriting: false,
@@ -23,15 +23,19 @@ App.MessengerBoxController = Ember.ObjectController.extend({
   hasFocus: false,
   isStarted: false,
 
+  count: null,
+  limit: 15,
+  page: 1,
+
   // element with messages and scrollbar
   messagesElementSelector: '.messages',
 
   isOnline: function(){
-    if( this.get('model.onlineStatus') == 'online' ) {
+    if( this.get('model.messengerStatus') == 'online' ) {
       return true;
     }
     return false;
-  }.property('model.onlineStatus'),
+  }.property('model.messengerStatus'),  
 
   boxId: function() {
     return 'messengerBox-'+ this.get('id');
@@ -56,50 +60,45 @@ App.MessengerBoxController = Ember.ObjectController.extend({
 
   }.observes('messageNew'),
 
-  contactUserId: function() {
-    if (this.get('to.id') != App.currentUser.id ) {
-      return this.get('to.id') ;
-    }
-    // check if are a message from authenticated user
-    // to box user id
-    if (this.get('from.id') != App.currentUser.id) {
-      return this.get('from.id');
-    }
-  }.property('contact'),
-
   init: function() {
     this._super();
     var self = this;
-    var contactId = self.get('contactUser.id');
+    var contactId = self.get('model.id');
 
     if( contactId ) {
-      this.send('getMessagesWithUser');
+      this.getMessagesWithUser().then(function (){
+        Ember.run.scheduleOnce('afterRender', self, function() {
+          this.send('scrollToBottom');
+        });
+      });
     }
 
     /**
      * Filter messaget with authenticaded user and contact user id
      */
-    self.set('messages', this.get('store').filter('message',
+    this.get('store').filter('message',
       function(message) {
         // check if are a message to authenticated user
         // form contact user id
         if(
-          message.get('toId.id') == App.currentUser.id &&
-          message.get('fromId.id') == contactId
+          message.get('toId.id') === App.currentUser.id &&
+          message.get('fromId.id') === contactId
         ) {
           return true;
         }
         // check if are a message from authenticated user
         // to box user id
         if(
-          message.get('fromId.id') == App.currentUser.id &&
-          message.get('toId.id') == contactId
+          message.get('fromId.id') === App.currentUser.id &&
+          message.get('toId.id') === contactId
         ) {
           return true;
         }
         return false;
       }
-    ));
+    ).then(function (messages){
+      self.set('messages', messages);
+    });
 
     /**
      * Receive a user is writing notification
@@ -112,12 +111,12 @@ App.MessengerBoxController = Ember.ObjectController.extend({
     var self = this;
 
     if (data.user && data.user.id) {
-      if ( this.get('contactUserId') == data.user.id && !this.get('isWriting')) {
-
+      if ( Number( this.get('model.id') ) === data.user.id && !this.get('isWriting') ) {
         // set one delay for re-send this event
-        self.set('isWriting', setTimeout(function isWritingTime(){
+        self.set('isWriting', true);
+        setTimeout(function isWritingTime(){
           self.set('isWriting', false);
-        }, self.get('isContactWritingTime')));
+        }, self.get('isContactWritingTime'));
       }
     }
   },
@@ -127,19 +126,55 @@ App.MessengerBoxController = Ember.ObjectController.extend({
     io.socket.removeListener('user:writing', this.onContactWriting.bind(this));
   },
 
+  /**
+   * Get messages how authenticated user has did with user id
+   */
+  getMessagesWithUser: function messagesWithUser(){
+    var self = this;
+
+    self.set('isLoading', true);
+    var id = self.get('model.id');
+
+    return self.get('store').find('message', {
+      uid: id,
+      limit: this.get('limit'), 
+      skip: ( this.get('page') - 1 ) * this.get('limit')        
+    }).then(function (privateMessages) {
+      if ( privateMessages && privateMessages.meta ) {
+        self.set('count', privateMessages.meta.count);
+      }
+
+      self.set('isLoading', false);  
+      self.set('isStarted', true);        
+    });
+  },   
+
   actions: {
+    scrollAtTop: function (messageArea, previousHeight){
+      var self = this;
+      if ( this.get('messages.length') < this.get('count') ) {
+        this.incrementProperty('page');
+        // this.send('getMessagesPublic');
+        this.getMessagesWithUser().then(function (){
+          Ember.run.scheduleOnce('afterRender', self, function() {
+            messageArea.scrollTop( messageArea[0].scrollHeight - previousHeight );
+          });
+        });
+      }
+    },
+
     lockScroll: function lockScroll (flag) {
       this.set('isScrolled', flag);
     },
 
-    focusToggle: function(flag) {
-      this.set('hasFocus', flag);
-      // has focus
-      if(flag && this.get('isVisible')) {
-        this.set('hasNews', false);
-        this.send('markAllAsRead');
-      }
-    },
+    // focusToggle: function(flag) {
+    //   this.set('hasFocus', flag);
+    //   // has focus
+    //   if(flag && this.get('isVisible')) {
+    //     this.set('hasNews', false);
+    //     this.send('markAllAsRead');
+    //   }
+    // },
 
     /**
      * Mark all unread messages as read
@@ -149,9 +184,9 @@ App.MessengerBoxController = Ember.ObjectController.extend({
       var messages = this.get('messages');
 
       messages.forEach(function(message){
-        if (!message.get('read') ) {
+        if ( !message.get('read') ) {
           // only mark as read messages how you received
-          if( message.get('fromId.id') != App.currentUser.id) {
+          if( message.get('fromId.id') !== App.currentUser.id) {
             message.set('read', true);
             message.save();
           }
@@ -162,16 +197,13 @@ App.MessengerBoxController = Ember.ObjectController.extend({
     openList: function(){
       this.set('isVisible', 'show');
     }.observes('messages'),
+
     closeList: function() {
       this.set('model.isTalking', false);
     },
+
     toggleList: function(){
-      if(this.get('isListOpen') === 'hide'){
-        this.set('isListOpen', 'show');
-      }else{
-        this.set('isListOpen', 'hide');
-      }
-      this.send('scrollToBottom');
+      this.toggleProperty('isListOpen');
     },
 
     scrollToBottom: function(){
@@ -186,22 +218,6 @@ App.MessengerBoxController = Ember.ObjectController.extend({
       }, 10);
     },
 
-    /**
-     * Get messages how authenticated user has did with user id
-     */
-    getMessagesWithUser: function messagesWithUser(){
-      var self = this;
-
-      var id = self.get('contactUser.id');
-
-      self.get('store').find('message', {
-        uid: id
-      }).then(function () {
-        self.set('isStarted', true);
-        self.send('scrollToBottom');
-      });
-    },
-
     sendMessage: function sendMessageToContact(){
       var self = this;
       // if is empty messageNew ...
@@ -209,31 +225,26 @@ App.MessengerBoxController = Ember.ObjectController.extend({
         return;
       }
 
-      // preload authenticated user record
-      this.get('store').find('user', App.currentUser.id)
-      .then(function(currentUser) {
-        // create the record and let message controller save the record in db
-        var message = self.get('store').createRecord('message', {
-          content: self.get('messageNew'),
-          toId: self.get('contactUser'),
-          fromId: currentUser,
-          createdAt: new Date(),
-          status: 'sending'
-        });
-        // clean input box
-        self.set('messageNew', '');
-        // scroll to bottom after send a message
-        self.send('scrollToBottom');
+      var message = self.get('store').createRecord('message', {
+        content: self.get('messageNew'),
+        toId: self.get('model'),
+        fromId: App.currentUser,
+        createdAt: new Date(),
+        status: 'sending'
+      });
+      // clean input box
+      self.set('messageNew', '');
+      // scroll to bottom after send a message
+      self.send('scrollToBottom');
 
-        message.save().then(function() {
-          setTimeout(function(){
-            message.set('status', 'salved');
-          }, 3000);
-          message.set('status', 'send');
-        },function(e){
-          console.warn('err:',e);
-        });
-      })
+      message.save().then(function() {
+        setTimeout(function(){
+          message.set('status', 'salved');
+        }, 3000);
+        message.set('status', 'send');
+      },function(e){
+        console.warn('err:',e);
+      });
     },
 
     /**
@@ -244,14 +255,14 @@ App.MessengerBoxController = Ember.ObjectController.extend({
      */
     emitIsWriting: function emitIsWriting(){
       var self = this;
-      var contactId = this.get('contactUserId');
+      var contactId = self.get('model.id');
 
       // only send this event every "isWritingTime" secconds
       if( !self.get('iAmWritingTimeout') ){
-        io.socket.post('/messenger/user/writing',{
+        io.socket.post('/messenger/user/writing?access_token=' + App.get('auth.authToken'), {
           toUserId: contactId
-        },function(resp){
-          if(resp.status && resp.status !== 200) {
+        },function(resp, jwres){
+          if(jwres.statusCode && jwres.statusCode !== 200) {
             Ember.Logger.error('Error on emitIsWriting',resp);
           }
         });

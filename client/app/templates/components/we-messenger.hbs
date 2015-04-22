@@ -10,7 +10,7 @@
           </button>
           </div>
           <ul class="nav nav-list friendlist contact-list">
-            {{#each contacts}}
+            {{#each filteredContacts}}
               {{render 'messenger/contact' this}}
             {{/each}}
           </ul>
@@ -22,7 +22,7 @@
             </li>
           </ul>
           <div class="search-area">
-            <input type="search" data-ng-model="searchFriend" placeholder="Search ...">
+            {{input type="text" value=srcCriteria placeholder="Procure ..."}}
           </div>
         </div>
       {{else}}

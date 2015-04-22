@@ -1,6 +1,7 @@
 <div {{bind-attr class=messageClass}} >
-  <span class="avatar-small">{{we-avatar userId=fromId.id}}</span>
-  <small>{{fromId.username}}</small>
+  {{!-- <span class="avatar-small">{{we-avatar userId=fromId.id}}</span> --}}
+  <span class="avatar-small">{{user-avatar user=fromId}}</span>
+  <small>{{fromId.displayName}}</small>
   <span class="message">{{content.content}}</span>
   <div class="message-footer">
     <span class="createdAt">
@@ -8,4 +9,3 @@
     </span>
   </div>
 </div>
-
