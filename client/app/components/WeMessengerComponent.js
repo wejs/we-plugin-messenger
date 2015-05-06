@@ -85,7 +85,13 @@ App.WeMessengerComponent = Ember.Component.extend({
       self.get('store').pushPayload('message', {
         message: socketMessage.message
       });
-      socketMessage.message.fromId.set('isTalking', true);      
+      socketMessage.message.fromId.set('isTalking', true);
+    });
+
+    we.events.on('we-messenger-updated-message', function OnReceiveMessage(socketMessage) {
+      self.get('store').pushPayload('message', {
+        message: socketMessage.message
+      });
     });
   },
   didInsertElement: function didInsertElement() {
@@ -199,6 +205,17 @@ App.WeMessengerComponent = Ember.Component.extend({
     });
 
     /**
+     * Receive a message update
+     * @param  Object data
+     */
+    socket.on('update:message', function(data) {
+      if( !App.get('auth.isAuthenticated') ) return false;
+      if( data.message ){
+        we.events.trigger('we-messenger-updated-message', data);
+      }
+    });
+
+    /**
      * Message receved after a contact connect
      * @param  object data
      */
@@ -231,21 +248,21 @@ App.WeMessengerComponent = Ember.Component.extend({
 
 
     /**
-     * Socket lost connection and successfully reconnected     
+     * Socket lost connection and successfully reconnected
      */
     socket.on('reconnect', function() {
       self.set('reconnected', true);
     });
 
     /**
-     * Socket lost connection and successfully reconnected/connected     
+     * Socket lost connection and successfully reconnected/connected
      */
     socket.on('connect', function() {
       if ( self.get('reconnected') ){
         self.send('startMessenger');
       }
-    });    
-  }, 
+    });
+  },
 
   /**
    * Remove acentos de caracteres
@@ -263,12 +280,12 @@ App.WeMessengerComponent = Ember.Component.extend({
       c : /\xE7/g,
       n : /\xF1/g
     };
-   
+
     for ( var letra in mapaAcentosHex ) {
       var expressaoRegular = mapaAcentosHex[letra];
       string = string.replace( expressaoRegular, letra );
     }
-   
+
     return string;
   }
 });

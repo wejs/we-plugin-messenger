@@ -392,11 +392,11 @@ module.exports = {
         var socketRoomName = 'user_' + updatedRecord.fromId;
         // if has toId send the message in sails.js default responde format
         req._sails.io.sockets.in(socketRoomName).emit(
-          'message',
+          'update:message',
           {
             id: updatedRecord.id,
             verb: 'updated',
-            data: updatedRecord
+            message: updatedRecord
           }
         );
 
