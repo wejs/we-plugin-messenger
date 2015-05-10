@@ -8,7 +8,7 @@
 module.exports = function Model(we) {
   var model = {
     definition: {
-      fromId: {
+      creatorId: {
         type: we.db.Sequelize.BIGINT,
         allowNull: false
       },
@@ -23,10 +23,6 @@ module.exports = function Model(we) {
       status: {
         type: we.db.Sequelize.STRING,
         defaultsTo: 'salved'
-      },
-      read: {
-        type: we.db.Sequelize.BOOLEAN,
-        defaultValue: false
       }
     },
 

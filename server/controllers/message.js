@@ -28,7 +28,7 @@ module.exports = {
         ]
       };
     }
-    we.db.models.message.find(res.locals.query)
+    we.db.models.message.findAll(res.locals.query)
     .then(function( messages) {
       we.db.models.message.count(res.locals.query)
       .then(function(count) {
@@ -118,74 +118,6 @@ module.exports = {
       });
     }).catch(res.serverError);
   },
-
-  /**
-   * Start messenger / loggin in messenger
-   */
-  // start: function startMessenger(req, res){
-  //   if( !req.isAuthenticated() ) return res.forbidden();
-
-  //   if ( !req.isSocket ) {
-  //     sails.log.warn('Start messenger without socket.io not is implemented',req.user.id);
-  //     return res.badRequest();
-  //   }
-
-  //   var userId = req.user.id;
-  //   var user = req.user;
-  //   var socket = req.socket;
-
-  //   socket.userId = userId;
-
-  //   if( typeof sails.onlineusers === 'undefined' )
-  //     sails.onlineusers = {};
-
-  //   // save user data in online users cache
-  //   if( typeof sails.onlineusers[userId] === 'undefined' ){
-  //     user.messengerStatus = 'online';
-
-  //     if ( user.toJSON ) user = user.toJSON();
-
-  //     // save a the new socket connected on links users
-  //     sails.onlineusers[userId] = {
-  //       user: user,
-  //       sockets: []
-  //     };
-
-  //     sails.onlineusers[userId].sockets.push(socket.id);
-
-  //     // TODO change to send to friends
-  //     sails.io.sockets.in('global').emit('contact:connect', {
-  //       status: 'connected',
-  //       item: user
-  //     });
-
-  //   } else {
-  //     sails.onlineusers[userId].sockets.push(socket.id);
-  //   }
-
-
-  //   // join user exclusive room to allow others users send
-  //   // mesages to this user
-  //   // User.subscribe(socket , [userId] );
-  //   socket.join('user_' + userId);
-
-  //   // TODO change to userId friends room
-  //   socket.join('global');
-
-  //   // Public room
-  //   // TODO make this dynamic and per user configurable
-  //   socket.join('public');
-
-  //   // Fetch all online to send as response
-  //   var usersOnline = _.reduce( sails.onlineusers, function (prev, onlineUser){
-  //     if ( onlineUser.sockets.length && ( req.user.id !== onlineUser.user.id ) ) {
-  //       return prev.concat([onlineUser.user]);
-  //     }
-  //     return prev;
-  //   }, []);
-
-  //   res.send(200, { user: req.user, usersOnline: usersOnline });
-  // },
 
   /**
    * Get contact list

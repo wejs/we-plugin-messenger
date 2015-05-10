@@ -24,7 +24,7 @@ module.exports = function Model(we) {
       /**
        * CreatorId
        */
-      creator: {
+      creatorId: {
         type: we.db.Sequelize.BIGINT,
         allowNull: false
       }
