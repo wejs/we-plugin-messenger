@@ -1,0 +1,293 @@
+<html>
+  <head>
+    <title>{{title}}</title>
+  </head>
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
+ <link rel="stylesheet" href="http://os.alfajango.com/css/jquery.cssemoticons.css">
+
+  <style type="text/css">
+    .chat-messages {
+      min-height: 50px;
+      width: 100%;
+      display: block;
+      border: 2px solid;
+      padding: 5px;
+      overflow-y: auto;
+    }
+
+    .message {
+      border-bottom: 1px dashed #dfdfdf;
+      padding: 6px;
+    }
+
+    body {
+      margin: 5px;
+    }
+
+  </style>
+
+  <body>
+  {{#if showTitle}}<h1>{{title}}</h1>{{/if}}
+
+  <div class="chat">
+    <div class="chat-form-area">
+      {{#if isAuthenticated}}
+        <form class="form-inline" id="newMessageForm" onsubmit="weChat.sendMessage();return false;">
+          <div class="form-group">
+              <input id="newMessageContent" name="newMessageContent" type="content" class="form-control" placeholder="New message">
+              <button type="submit" class="btn btn-default">Submit</button>
+          </div>
+        <form>
+      {{else}}
+        {{!-- <a href="/login" target="_blank">Login to send messages.</a> --}}
+      {{/if}}
+    </div>
+
+    <div class="chat-meta-data">
+    Total: <span id="we-chat-message-count"></span>
+    </div>
+    <ul id="messagesList" class="chat-messages" style="height:{{height}}px;">
+
+    </ul>
+  </div>
+
+  <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery.cookie/1.4.1/jquery.cookie.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.2/moment-with-locales.min.js"></script>
+  <script type="text/javascript" src="/public/plugin/we-core/client/shared/libs/jquery.cssemoticons.js"></script>
+
+  <script type="text/javascript" src="/public/plugin/we-core/client/shared/beforeAll/8_socket.io.js"></script>
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+  <script type="text/javascript">
+    var weChat = {
+      socket: null,
+
+      user: null,
+      isOnline: false,
+
+      messages: [],
+      lastMessageId: 0,
+
+      messageCount: 0,
+      users: {},
+      loadingUsers: {},
+
+      showAvatar: true,
+      avatarWidth: 25,
+
+      initialize: function initialize() {
+        var self = this;
+
+        var authToken = $.cookie('weoauth');
+        var socket = this.socket;
+
+        socket = io.connect({
+          query: 'authToken=' + authToken
+        });
+
+        socket.on('connect', function(){
+          socket.emit('messenger:start');
+          socket.emit('messenger:room:subscribe', { roomId: currentRoom.id });
+        });
+
+        socket.on('messenger:room:message:created', function(data) {
+          if (!self.messageExists(data.roommessage.id)) {
+            self.newMessage(data.roommessage);
+            self.messages.push(data.roommessage);
+            self.incrementCount();
+          }
+        });
+
+        socket.on('is:online', function(data) {
+           weChat.user = data;
+        })
+
+        this.socket = socket;
+
+        this.findRoomMessages();
+
+
+        $(function($) {
+          $('#messagesList').bind('scroll', function() {
+            if($(this).scrollTop() + $(this).innerHeight() >= this.scrollHeight) {
+              self.loadMoreMessages();
+            }
+          })
+        });
+      },
+
+
+      setCount: function(count) {
+        this.messageCount = count;
+        $('#we-chat-message-count').text(this.messageCount);
+      },
+
+      incrementCount: function() {
+        this.messageCount++;
+        $('#we-chat-message-count').text(this.messageCount);
+      },
+
+      messageExists: function(id) {
+        if ($('#we-chat-message-'+ id).length) return true;
+        return false;
+      },
+      newMessage: function(message) {
+        if (this.messageExists(message.id)) return;
+        var self = this;
+        if (!this.users[message.creatorId]) {
+          self.renderMessage(message, null);
+          this.findUser(message.creatorId, function (err, user) {
+            self.users[message.creatorId] = user;
+            self.renderMessage(message, user);
+          });
+        } else {
+          self.renderMessage(message, self.users[message.creatorId]);
+        }
+      },
+
+      renderMessage: function(message, creator) {
+        var creatorTag = '';
+        var avatarTag = '';
+        if (creator && creator.displayName) {
+          if (creator.displayName.length > 10) creator.displayName = creator.displayName.substr(0, 10);
+          creatorTag = '<span data-user-id='+creator.id+'>'+ creator.displayName +'</span>';
+        }
+
+        if (this.showAvatar) {
+          avatarTag += '<img width="'+this.avatarWidth+' px" src="/avatar/' + message.creatorId + '"> ';
+        }
+
+        if ($('#we-chat-message-'+ message.id).length) {
+          $('#we-chat-message-' + message.id).html(
+            avatarTag + creatorTag + ': ' + message.content
+          );
+        } else {
+          var position = 'prepend';
+          if (this.lastMessageId < message.id) {
+            this.lastMessageId = message.id;
+          } else {
+            position = 'append';
+          }
+
+          var item = '<li class="message" id="we-chat-message-'+ message.id +'" data-message-id='+ message.id +'>';
+          item += avatarTag + creatorTag+ ': ';
+          item += message.content;
+          item += '</li>';
+          $('#messagesList')[position](item);
+        }
+
+        $('#we-chat-message-' + message.id).emoticonize();
+      },
+
+      sendMessage: function() {
+        var self = this;
+        var content = $.trim($('#newMessageContent').val());
+        if (!content) return;
+
+        $.post('/roommessage', {
+          content: content,
+          roomId: currentRoom.id
+        })
+        .done(function(data) {
+          self.newMessage(data.roommessage[0]);
+          self.messages.push(data.roommessage[0]);
+        })
+        .fail(function() {
+          alert( "error" );
+        })
+        .always(function() {
+          $('#newMessageContent').val('');
+        });
+
+        return false;
+      },
+
+      findRoomMessages: function() {
+        var self = this;
+        return $.get('/roommessage', {
+          roomId: currentRoom.id,
+          limit: self.limit,
+          offset: self.offset,
+          order: 'id DESC'
+        })
+        .done(function(data) {
+          self.setCount(data.meta.count);
+          for (var i = 0; i <= data.roommessage.length-1; i++) {
+            self.newMessage(data.roommessage[i]);
+            self.messages.push(data.roommessage[i]);
+          };
+        })
+        .fail(function() {
+          alert( "error" );
+        })
+        .always(function() {
+          $('#newMessageContent').val('');
+        });
+      },
+
+      isLoadingMore: false,
+      limit: 10,
+      offset: 0,
+
+      loadMoreMessages: function() {
+        if (this.isLoadingMore) return;
+        if (this.messageCount <= this.messages.length) return;
+
+        var self = this;
+        this.isLoadingMore = true;
+
+        this.offset = this.offset + this.limit;
+
+        this.findRoomMessages().always(function() {
+          self.isLoadingMore = false;
+        });
+      },
+
+      findUser: function(uid, cb) {
+        if (this.loadingUsers[uid]) {
+          this.loadingUsers[uid].done(function(data) {
+            cb(null, data.user[0]);
+          });
+        } else {
+          this.loadingUsers[uid] = $.get('/user/'+ uid)
+          .done(function(data) {
+            cb(null, data.user[0]);
+          })
+          .fail(function() {
+            alert( "error" );
+          });
+        }
+      }
+    };
+
+    window.weChat = weChat;
+
+  </script>
+  <script type="text/javascript">
+    /**
+     * Add Accept in all request
+     *
+     */
+    $.ajaxPrefilter(function( options ) {
+      if ( !options.beforeSend) {
+        options.beforeSend = function (xhr) {
+          xhr.setRequestHeader('Accept', 'application/json');
+
+          // set auth token
+          if ($.cookie('weoauth')) xhr.setRequestHeader('Authorization','Bearer ' + $.cookie('weoauth'));
+        };
+      }
+    });
+
+    window.moment.locale('{{locale}}');
+
+    window.currentRoom = {{{jsonRecord}}};
+    weChat.initialize();
+  </script>
+</body>
+</html>

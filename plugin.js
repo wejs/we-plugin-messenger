@@ -11,6 +11,26 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       'use_messenger': {
         'title': 'Use the messenger',
         'description': 'Use we.js messenger'
+      },
+      'find_room': {
+        'title': 'Find room',
+        'description': 'Find and findAll rooms'
+      },
+      'create_room': {
+        'title': 'Create room',
+        'description': 'Create one room'
+      },
+      'update_room': {
+        'title': 'Update room',
+        'description': 'Update one room'
+      },
+      'delete_room': {
+        'title': 'Delete room',
+        'description': 'Delete one room'
+      },
+      'create_roommessage': {
+        'title': 'Create roommessage',
+        'description': 'Create one room message'
       }
     }
   });
@@ -57,7 +77,8 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       action        : 'messagesWithUser',
       model         : 'message',
       responseType  : 'json',
-      permission    : 'use_messenger'
+      permission    : 'use_messenger',
+      loadRecord    :  true
     },
     // Return messages without toIds and roomIds
     'get /messenger/messages/public': {
@@ -65,6 +86,7 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       action        : 'getPublicMessages',
       model         : 'message',
       responseType  : 'json',
+      loadRecord    :  true,
       permission    : 'use_messenger'
     },
     // Send a message to show writing status
@@ -73,6 +95,7 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       action        : 'emitIamWriting',
       model         : 'message',
       responseType  : 'json',
+      loadRecord    :  true,
       permission    : 'use_messenger'
     },
     // -- ROOM
@@ -126,28 +149,14 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       model         : 'roommessage',
       permission    : 'create_roommessage'
     },
-    // 'put /roommessage/:id([0-9]+)': {
-    //   controller    : 'roommessage',
-    //   model         : 'roommessage',
-    //   action        : 'update',
-    //   permission    : 'update_room'
-    // },
-    // 'delete /roommessage/:id([0-9]+)': {
-    //   controller    : 'room',
-    //   model         : 'room',
-    //   action        : 'destroy',
-    //   permission    : 'delete_room'
-    // },
 
-
-    // // get users in one room
-    // 'get /rooms/users/': {
-    //     controller    : 'rooms',
-    //     action        : 'usersGet'
-    // },
-    // add user in room
-
-
+    'get /widget/room/:id([0-9]+)': {
+      controller    : 'room',
+      model         : 'room',
+      action        : 'roomIframe',
+      loadRecord    :  true,
+      permission    : 'find_room'
+    }
   });
 
   plugin.events.on('we:after:load:socket.io', require('./lib/we-after-load-socket.io'));

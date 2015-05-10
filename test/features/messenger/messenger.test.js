@@ -22,7 +22,6 @@ describe('messengerFeature', function() {
     we.config.acl.disabled = true;
     connectUrl = 'http://localhost:' + we.config.port;
 
-
     async.parallel([
       function connectUser(done){
         helpers.createAndLoginUser(function (err, result) {
