@@ -1,0 +1,26 @@
+sudo: required
+
+language: node_js
+
+node_js:
+  - '0.12'
+  - '0.10'
+
+services:
+  - mysql
+
+env:
+  NODE_ENV: 'test'
+
+before_script:
+  - sudo apt-get install graphicsmagick
+  - mysql -e 'create database test;'
+  - npm install -g istanbul
+  - npm install -g mocha
+
+after_success:
+  - NODE_ENV=test LOG_LV=info istanbul cover _mocha -- -R spec test/bootstrap.js test/**/*.test.js --timeout 10000
+
+notifications:
+  email:
+    - alberto@wejs.org
