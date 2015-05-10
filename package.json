@@ -26,7 +26,7 @@
     "sinon": "^1.14.1",
     "socket.io-client": "^1.3.5",
     "supertest": "^0.15.0",
-    "we-core": "^0.3.10",
+    "we-core": "^0.3.11",
     "we-theme-admin-default": "^0.3.1",
     "we-theme-site-wejs": "^0.3.6"
   },
