@@ -1,12 +1,12 @@
 {
   "name": "we-plugin-messenger",
   "description": "We.js messenger plugin",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "main": "lib/index.js",
   "scripts": {
     "lint": "./node_modules/.bin/jshint .",
     "test": "NODE_ENV=test LOG_LV=info ./node_modules/.bin/mocha test/bootstrap.js test/**/*.test.js --timeout 5000",
-    "prepublish": "npm prune"
+    "prepublish": "npm prune && npm test"
   },
   "dependencies": {
     "include-all": "^0.1.6",
