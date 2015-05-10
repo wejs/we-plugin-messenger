@@ -2,26 +2,32 @@
 
 [![Dependency Status](https://david-dm.org/wejs/we-plugin-messenger.png)](https://david-dm.org/wejs/we-plugin-messenger)
 
-> Chat messenger for We.js, talk with contacts in we.js systems
-
 ## Has suport to:
 
  - user to user talk
  - public chat
- - user to room TODO!
+ - user to room!
 
-## API:
-TODO add a how to register new flags
 
-## Sails.js resources:
+### How to test
 
- - Messenger Controller
- - Rooms Controller
- - Message Model
- - Rooms Model
+after clone and install npm packages:
 
-## Avaible URLS:
-TODO register the plugin urls here
+```sh
+npm test
+```
+
+##### For run only 'Chat' test use:
+
+```sh
+NODE_ENV=test LOG_LV=info ./node_modules/.bin/mocha test/bootstrap.js test/**/*.test.js -g 'Chat'
+```
+
+##### For run the javascript linter
+
+```sh
+npm run lint
+```
 
 #### NPM Info:
 [![NPM](https://nodei.co/npm/we-plugin-messenger.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/we-plugin-messenger/)
