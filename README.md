@@ -1,6 +1,7 @@
 # We.js messenger plugin
 
 [![Dependency Status](https://david-dm.org/wejs/we-plugin-messenger.png)](https://david-dm.org/wejs/we-plugin-messenger)
+[![Build Status](https://travis-ci.org/wejs/we-plugin-messenger.svg?branch=0.3.x)](https://travis-ci.org/wejs/we-plugin-messenger)
 
 ## Has suport to:
 
