@@ -98,6 +98,14 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       loadRecord    :  true,
       permission    : 'use_messenger'
     },
+    'get /widget/messenger/:id([0-9]+)': {
+      controller    : 'message',
+      model         : 'user',
+      action        : 'contactBoxIframe',
+      loadRecord    :  true,
+      permission    : 'use_messenger'
+    },
+
     // -- ROOM
     'get /room': {
       controller    : 'room',

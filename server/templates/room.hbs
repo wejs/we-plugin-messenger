@@ -90,6 +90,11 @@
           query: 'authToken=' + authToken
         });
 
+        if (window.currentUser) {
+          self.user = window.currentUser;
+          self.users[window.currentUser.id] = window.currentUser;
+        }
+
         socket.on('connect', function(){
           socket.emit('messenger:start');
           socket.emit('messenger:room:subscribe', { roomId: currentRoom.id });
@@ -286,7 +291,9 @@
 
     window.moment.locale('{{locale}}');
 
+    window.currentUser = {{{currentUserJsonRecord}}};
     window.currentRoom = {{{jsonRecord}}};
+
     weChat.initialize();
   </script>
 </body>

@@ -6,6 +6,7 @@
  * @description	:: Contains logic for handling requests.
  */
 var _ = require('lodash');
+var path = require('path');
 
 module.exports = {
   find: function findRecords(req, res) {
@@ -30,8 +31,9 @@ module.exports = {
     }
     we.db.models.message.findAll(res.locals.query)
     .then(function( messages) {
-      we.db.models.message.count(res.locals.query)
-      .then(function(count) {
+      we.db.models.message.count({
+        where: res.locals.query.where
+      }).then(function(count) {
         return res.send({
           message: messages,
           meta: {
@@ -156,50 +158,20 @@ module.exports = {
     message.fromId = req.user.id;
     message.toId = req.body.toId;
 
-    // public message
+    // toId is required
     if ( !message.toId ) {
-      return we.db.models.message.create(message)
-      .then(function (newMessage) {
-        // send to public room
-        we.io.sockets.in('public').emit(
-          'receive:public:message',
-          {
-            message: newMessage
-          }
-        );
-        return res.ok(newMessage);
-      }).catch(res.serverError);
+      res.addMessage('error', 'messenger.toId.required', {
+        type: 'validation', field: 'toId', rule: 'required'
+      });
+      return res.badRequest();
     }
-
-    // to contact message
-    // return Contact.getUsersRelationship(message.fromId, message.toId, function(err, contact) {
-    // if (err) {
-    //   sails.log.error('CreateMessage:Contact.getUsersRelationship:', err);
-    //   return res.serverError();
-    // }
-
-    // // user dont are one contact
-    // if (!contact || ( contact.status !== 'accepted' ) ) {
-    //   return res.forbidden();
-    // }
 
     we.db.models.message.create(message)
     .then(function createMessageToContact(newMessage) {
-      var socketRoomName = 'user_' + newMessage.toId;
-
-      we.io.sockets.in(socketRoomName).emit(
-        'receive:message',
-        {
-          id: newMessage.id,
-          verb: 'created',
-          message: newMessage
-        }
-      );
-
-      return res.ok(newMessage);
+      we.io.sockets.in('user_' + newMessage.toId)
+     .emit( 'messenger:private:message:created', { message: newMessage } );
+      return res.created(newMessage);
     }).catch(res.serverError);
-    // });
-
   },
 
   update: function (req, res) {
@@ -312,39 +284,31 @@ module.exports = {
     // }
 
     res.send(200,'');
+  },
+
+  contactBoxIframe: function roomIframe(req, res) {
+    if (!res.locals.record) return res.notFound();
+    if (!req.isAuthenticated()) return res.badRequest();
+    if (req.user === res.locals.record.id) return res.badRequest();
+
+    var we = req.getWe();
+
+    res.locals.title = res.locals.record.displayName;
+
+    res.locals.currentUserJsonRecord = JSON.stringify(req.user.toJSON());
+    res.locals.jsonRecord = JSON.stringify(res.locals.record.toJSON());
+
+    res.locals.height = Number(req.query.height) || 270;
+
+    res.locals.isAuthenticated = req.isAuthenticated();
+
+    if (req.user && req.user.language) {
+      res.locals.locale = req.user.language;
+    } else {
+      res.locals.locale = we.config.i18n.defaultLocale;
+    }
+
+    res.locals.layout = false;
+    res.render(path.resolve(__dirname, '..', 'templates/contactbox.hbs'));
   }
-
 };
-
-// function createContactMessage (message){
-//   Message.create(message).exec(function (error, newMessage){
-//     if (error) {
-//       console.log(error);
-//       return res.send(500, {error: res.i18n('DB Error') });
-//     }
-//     // TODO add suport to rooms
-//     if(message.toId){
-
-//       var socketRoomName = 'user_' + newMessage.toId;
-//       // if has toId send the message in sails.js default responde format
-//       sails.io.sockets.in(socketRoomName).emit(
-//         'message',
-//         {
-//           id: newMessage.id,
-//           verb: 'created',
-//           data: newMessage
-//         }
-//       );
-//     } else {
-//       // send to public room
-//       sails.io.sockets.in('public').emit(
-//         'receive:public:message',
-//         {
-//           message: newMessage
-//         }
-//       );
-//     }
-//     return res.send(newMessage);
-
-//   });
-// }

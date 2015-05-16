@@ -75,7 +75,8 @@ describe('messengerFeature', function() {
             assert.equal(message.username, salvedUser.username);
             done();
           });
-          client.emit('messenger:start');
+          client.emit('messenger:start:list');
+          client.emit('messenger:private:talk:start');
         },
         function startClient2Messenger (done) {
           client2.once('is:online', function (message) {
@@ -84,9 +85,79 @@ describe('messengerFeature', function() {
             assert.equal(message.username, salvedUser2.username);
             done();
           });
-          client2.emit('messenger:start');
+          client2.emit('messenger:start:list');
+          client2.emit('messenger:private:talk:start');
         }
       ], done);
+    });
+
+    it ('post /message should create one message', function(done){
+      var message = stubs.messageStub();
+      message.toId = salvedUser2.id;
+
+      authenticatedRequest.post('/message')
+      .send(message)
+      .set('Accept', 'application/json')
+      .expect(201)
+      .end(function (err, res) {
+        if (err) throw err;
+        assert(res.body.message);
+        assert( _.isArray(res.body.message) , 'message not is array');
+        assert(res.body.meta);
+        assert(res.body.message[0].id);
+        assert.equal(res.body.message[0].toId, salvedUser2.id);
+        assert.equal(res.body.message[0].fromId, salvedUser.id);
+        assert.equal(res.body.message[0].content, message.content);
+        done();
+      });
+    });
+    it ('post /message should create one message and contact receive the socket.io message', function(done){
+      var message = stubs.messageStub();
+      message.toId = salvedUser2.id;
+
+      client2.once('messenger:private:message:created', function (data) {
+        assert.equal(data.message.toId, salvedUser2.id);
+        assert.equal(data.message.fromId, salvedUser.id);
+        done();
+      });
+
+      authenticatedRequest.post('/message')
+      .send(message)
+      .set('Accept', 'application/json')
+      .expect(201)
+      .end(function (err, res) {
+        if (err) throw err;
+        assert(res.body.message);
+      });
+    });
+
+    it ('get /message?uid=:userId should get message list', function(done) {
+      async.each([ stubs.messageStub(), stubs.messageStub(), stubs.messageStub() ],
+      function (m, next) {
+        m.toId = salvedUser2.id;
+        m.fromId = salvedUser.id;
+        we.db.models.message.create(m).then(function(){
+          next();
+        }).catch(next);
+      }, function (err) {
+        if (err) throw err;
+
+        authenticatedRequest.get('/message?uid=' + salvedUser2.id)
+        .set('Accept', 'application/json')
+        .expect(200)
+        .end(function (err, res) {
+          if (err) throw err;
+          assert(res.body.message);
+          assert( _.isArray(res.body.message) , 'message not is array');
+          assert(res.body.meta.count > 0);
+
+          res.body.message.forEach(function(m) {
+            assert( (m.toId === salvedUser2.id) );
+          });
+
+          done();
+        });
+      });
     });
 
     it ('messenger:public:message:send should send one message to public room', function(done) {
