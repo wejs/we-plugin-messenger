@@ -1,7 +1,7 @@
 var assert = require('assert');
 var request = require('supertest');
-var helpers = require('../../helpers');
-var stubs = require('../../stubs');
+var helpers = require('we-test-tools').helpers;
+var stubs = require('we-test-tools').stubs;
 var ioClient = require('socket.io-client');
 var async = require('async');
 var _ = require('lodash');
@@ -25,7 +25,7 @@ describe('messengerFeature', function() {
     async.parallel([
       function connectUser(done){
         helpers.createAndLoginUser(function (err, result) {
-          if (err) return done(err);
+          if (err) throw err;
 
           salvedUser = result.salvedUser;
           salvedUserPassword = result.salvedUserPassword;
@@ -45,7 +45,7 @@ describe('messengerFeature', function() {
       },
       function connectUser2(done){
         helpers.createAndLoginUser(function (err, result) {
-          if (err) return done(err);
+          if (err) throw err;
 
           salvedUser2 = result.salvedUser;
           salvedUserPassword2 = result.salvedUserPassword;
