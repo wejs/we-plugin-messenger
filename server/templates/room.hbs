@@ -116,7 +116,6 @@
 
         this.findRoomMessages();
 
-
         $(function($) {
           $('#messagesList').bind('scroll', function() {
             if($(this).scrollTop() + $(this).innerHeight() >= this.scrollHeight) {
@@ -125,7 +124,6 @@
           })
         });
       },
-
 
       setCount: function(count) {
         this.messageCount = count;

@@ -20,7 +20,13 @@ module.exports = {
 
     res.locals.title = res.locals.record.name;
     res.locals.jsonRecord = JSON.stringify(res.locals.record.toJSON());
-    res.locals.currentUserJsonRecord = JSON.stringify(req.user.toJSON());
+
+    if (!req.user || !req.user.toJSON) {
+      res.locals.currentUserJsonRecord = JSON.stringify(req.user);
+    } else {
+      res.locals.currentUserJsonRecord = JSON.stringify(req.user.toJSON());
+    }
+
 
     res.locals.showTitle = req.query.showTitle === 'true';
 

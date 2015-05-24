@@ -1,0 +1,207 @@
+body {
+  margin: 0px;
+  font-family: "Open Sans",sans-serif;
+  background-color: #fff;
+}
+.chat-header {
+  background-color: #43a0dd;
+  color: #fff;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.chat-actions {
+  background-color: #dfdfdf;
+  min-height: 22px;
+  font-size: 80%;
+  padding: 1px 5px;
+  border-bottom: 1px solid #ccc;
+}
+
+.chat-messages {
+  list-style: none;
+  margin: 0px;
+  min-height: 50px;
+  width: 100%;
+  display: block;
+  padding: 5px 0px;
+  overflow-y: auto;
+  background-color: #dfdfdf;
+}
+.message {
+  padding: 6px;
+}
+
+/* Right triangle placed top left flush. */
+.talk-bubble.tri-right {
+  margin-left: 32px;
+  /*display: inline-block;*/
+  position: relative;
+  min-width: 200px;
+  height: auto;
+  background-color: #fff;
+}
+.tri-right.border.left-top:before {
+  content: ' ';
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: -40px;
+  right: auto;
+  top: -8px;
+  bottom: auto;
+  border: 32px solid;
+  border-color: #666 transparent transparent transparent;
+}
+.tri-right.left-top:after{
+  content: ' ';
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: -15px;
+  right: auto;
+  top: 0px;
+  bottom: auto;
+  border: 15px solid;
+  border-color: #fff transparent transparent transparent;
+}
+/* right triangle placed top right flush. */
+.talk-bubble.tri-left {
+  margin-right: 35px;
+  /*display: inline-block;*/
+  position: relative;
+  min-width: 200px;
+  height: auto;
+  background-color: #fff;
+}
+.tri-left.border.right-top:before {
+  content: ' ';
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: -40px;
+  right: auto;
+  top: auto;
+  bottom: -8px;
+  border: 32px solid;
+  border-color: #666 transparent transparent transparent;
+}
+.tri-left.right-top:after {
+  content: ' ';
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: auto;
+  right: -15px;
+  bottom: auto;
+  top: 0px;
+  border: 15px solid;
+  border-color: #fff transparent transparent transparent;
+}
+
+.message p {
+  padding: 8px;
+  margin: 0px;
+}
+
+.message img.avatar {
+  float: left;
+}
+.message.current-user img.avatar{
+  float: right;
+}
+
+.pull-right {
+  float: right;
+}
+
+.chat-real-time-status {
+  background-color: #dfdfdf;
+  padding: 2px 10px;
+  font-size: 0.8em;
+  min-height: 20px;
+}
+
+#contact-is-writing {
+  display: none;
+}
+
+.chat-form-area {
+  border: 1px solid transparent;
+}
+#chatClosed {
+  display: none;
+}
+.chat-contacts {
+
+}
+.chat-contacts {
+  list-style: none;
+  margin: 0px;
+  min-height: 50px;
+  width: 100%;
+  display: block;
+  padding: 0px 0px 5px 0px;
+  overflow-y: auto;
+  background-color: #fff;
+}
+
+.chat-contacts li {
+  display: table;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.chat-contacts a {
+  width: 100%;
+  display: block;
+  text-decoration: none;
+  overflow: hidden;
+  min-height: 35px;
+  color: #000;
+  cursor: pointer;
+  padding: 5px 5px;
+  line-height: 28px;
+  border-left: 3px solid #fff;
+}
+
+.chat-contacts .is-online a {
+  border-left: 5px solid lightgreen;
+}
+
+.chat-contacts a:hover {
+  background-color: #dfdfdf;
+}
+
+.user-avatar {
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  float: left;
+  margin-right: 5px;
+}
+
+div.is-starting {
+  margin: 20px 15px;
+  text-align: center;
+}
+
+body.is-starting .hide-on-start {
+  display: none;
+}
+
+.show-on-start {
+  display: none;
+}
+
+body.is-starting .show-on-start {
+  display: block;
+}
+
+.public-room-area {
+  position: fixed;
+  bottom: 0px;
+  padding: 5px;
+  border-top: 1px solid #ccc;
+  width: 100%;
+}

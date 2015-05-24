@@ -1,153 +1,18 @@
 <html>
   <head>
     <title>{{title}}</title>
+    <link rel="stylesheet" href="http://os.alfajango.com/css/jquery.cssemoticons.css">
+    <link rel="stylesheet" type="text/css" href="/public/plugin/we-plugin-messenger/files/we-messenger.css">
+
   </head>
-
-  <link rel="stylesheet" href="http://os.alfajango.com/css/jquery.cssemoticons.css">
-
-  <style type="text/css">
-    body {
-      margin: 0px;
-      font-family: "Open Sans",sans-serif;
-    }
-
-    .chat-header {
-      background-color: #43a0dd;
-      color: #fff;
-      padding: 10px;
-      font-size: 13px;
-      font-weight: 700;
-    }
-    .chat-actions {
-      background-color: #dfdfdf;
-      min-height: 22px;
-      font-size: 80%;
-      padding: 1px 5px;
-      border-bottom: 1px solid #ccc;
-    }
-
-    .chat-messages {
-      list-style: none;
-      margin: 0px;
-      min-height: 50px;
-      width: 100%;
-      display: block;
-      padding: 5px 0px;
-      overflow-y: auto;
-      background-color: #dfdfdf;
-    }
-    .message {
-      padding: 6px;
-    }
-
-    /* Right triangle placed top left flush. */
-    .talk-bubble.tri-right {
-      margin-left: 32px;
-      /*display: inline-block;*/
-      position: relative;
-      min-width: 200px;
-      height: auto;
-      background-color: #fff;
-    }
-    .tri-right.border.left-top:before {
-      content: ' ';
-      position: absolute;
-      width: 0;
-      height: 0;
-      left: -40px;
-      right: auto;
-      top: -8px;
-      bottom: auto;
-      border: 32px solid;
-      border-color: #666 transparent transparent transparent;
-    }
-    .tri-right.left-top:after{
-      content: ' ';
-      position: absolute;
-      width: 0;
-      height: 0;
-      left: -15px;
-      right: auto;
-      top: 0px;
-      bottom: auto;
-      border: 15px solid;
-      border-color: #fff transparent transparent transparent;
-    }
-    /* right triangle placed top right flush. */
-    .talk-bubble.tri-left {
-      margin-right: 35px;
-      /*display: inline-block;*/
-      position: relative;
-      min-width: 200px;
-      height: auto;
-      background-color: #fff;
-    }
-    .tri-left.border.right-top:before {
-      content: ' ';
-      position: absolute;
-      width: 0;
-      height: 0;
-      left: -40px;
-      right: auto;
-      top: auto;
-      bottom: -8px;
-      border: 32px solid;
-      border-color: #666 transparent transparent transparent;
-    }
-    .tri-left.right-top:after {
-      content: ' ';
-      position: absolute;
-      width: 0;
-      height: 0;
-      left: auto;
-      right: -15px;
-      bottom: auto;
-      top: 0px;
-      border: 15px solid;
-      border-color: #fff transparent transparent transparent;
-    }
-
-    .message p {
-      padding: 8px;
-      margin: 0px;
-    }
-
-    .message img.avatar {
-      float: left;
-    }
-    .message.current-user img.avatar{
-      float: right;
-    }
-
-    .pull-right {
-      float: right;
-    }
-
-    .chat-real-time-status {
-      background-color: #dfdfdf;
-      padding: 2px 10px;
-      font-size: 0.8em;
-      min-height: 20px;
-    }
-
-    #contact-is-writing {
-      display: none;
-    }
-
-    .chat-form-area {
-      border: 1px solid transparent;
-    }
-
-  </style>
-
   <body>
 
-  <div class="chat">
+  <div id="chat">
     <div class="chat-header">
       <span id="#connectionStatus"></span> {{title}}
       <span class="header-actions pull-right">
-        <button id="box-minimize" class="btn btn-close">-</button>
-        <button id="box-close" class="btn btn-close">X</button>
+        <button id="box-minimize" onclick="weChat.boxMinimize()" class="btn btn-close">-</button>
+        <button id="box-close" onclick="weChat.boxClose()" class="btn btn-close">X</button>
       </span>
     </div>
     <div class="chat-actions">
@@ -172,6 +37,16 @@
     </div>
   </div>
 
+  <div id="chatClosed">
+    <div class="chat-header">
+      <span id="#connectionStatus"></span> {{title}}
+      <span class="header-actions pull-right">
+        <button id="box-maximize" onclick="weChat.boxMaximize()" class="btn btn-maximize">-</button>
+      </span>
+    </div>
+  </div>
+
+
   <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery.cookie/1.4.1/jquery.cookie.min.js"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.2/moment-with-locales.min.js"></script>
@@ -180,6 +55,7 @@
   <script type="text/javascript" src="/public/plugin/we-core/client/shared/beforeAll/8_socket.io.js"></script>
   <script type="text/javascript">
     var weChat = {
+      parentDomain: 'http://localhost:3000',
       socket: null,
 
       user: null,
@@ -202,6 +78,8 @@
 
       elementList: null,
 
+      isMinimized: false,
+
       isWritingFlag: false,
       iAmWritingFlag: false,
       writingTime: 3000,
@@ -210,7 +88,6 @@
         var self = this;
 
         var authToken = $.cookie('weoauth');
-        var socket = this.socket;
 
         if (!window.contact || !window.contact.id)
           throw new Error('window.contact is required');
@@ -223,7 +100,7 @@
           self.users[window.currentUser.id] = window.currentUser;
         }
 
-        socket = io.connect({
+        var socket = io.connect({
           query: 'authToken=' + authToken
         });
 
@@ -253,6 +130,24 @@
 
         this.elementList = $('#messagesList');
 
+
+        // Create IE + others compatible event handler
+        var eventMethod = window.addEventListener ? 'addEventListener' : 'attachEvent';
+        var eventer = window[eventMethod];
+        var messageEvent = eventMethod === 'attachEvent' ? 'onmessage' : 'message';
+        eventer(messageEvent, function(e) {
+          if (self.parentDomain !== e.origin) return;
+          if (typeof e.data !== 'string') return;
+          var userId;
+
+          if ( e.data.startsWith('maximize_private_box_') ) {
+            userId = e.data.replace('maximize_private_box_', '');
+            if (!Number(userId)) return;
+            if (userId != self.contact.id) return;
+            self.boxMaximize();
+          }
+        });
+
         $( function ($) {
           self.elementList.bind('scroll', function() {
             if ( self.elementList.scrollTop() == 0 ) {
@@ -270,6 +165,24 @@
             self.iAmWriting();
           });
         });
+      },
+
+      boxClose: function() {
+        parent.postMessage('close_private_box_' + this.contact.id, this.parentDomain);
+      },
+      boxMinimize: function() {
+        parent.postMessage('minimize_private_box_' + this.contact.id, this.parentDomain);
+
+        $('#chat').hide();
+        $('#chatClosed').show();
+        this.isMinimized = true;
+      },
+
+      boxMaximize: function() {
+        parent.postMessage('maximize_private_box_' + this.contact.id, this.parentDomain);
+        $('#chat').show();
+        $('#chatClosed').hide();
+        this.isMinimized = false;
       },
 
       startLoading: function() {

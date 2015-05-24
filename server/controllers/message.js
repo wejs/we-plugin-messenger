@@ -286,6 +286,30 @@ module.exports = {
     res.send(200,'');
   },
 
+  contactListIframe: function(req, res) {
+    if (!req.isAuthenticated()) return res.forbiden();
+
+    var we = req.getWe();
+
+    res.locals.authenticatedJSONRecord = JSON.stringify(req.user.toJSON());
+
+    res.locals.height = Number(req.query.height) || 225;
+    res.locals.height -= 45;
+
+
+    res.locals.isAuthenticated = req.isAuthenticated();
+
+    if (req.user && req.user.language) {
+      res.locals.locale = req.user.language;
+    } else {
+      res.locals.locale = we.config.i18n.defaultLocale;
+    }
+
+    res.locals.layout = false;
+    res.locals.template = 'messenger/list';
+    res.view();
+  },
+
   contactBoxIframe: function roomIframe(req, res) {
     if (!res.locals.record) return res.notFound();
     if (!req.isAuthenticated()) return res.badRequest();
@@ -298,7 +322,7 @@ module.exports = {
     res.locals.currentUserJsonRecord = JSON.stringify(req.user.toJSON());
     res.locals.jsonRecord = JSON.stringify(res.locals.record.toJSON());
 
-    res.locals.height = Number(req.query.height) || 270;
+    res.locals.height = Number(req.query.height) || 225;
 
     res.locals.isAuthenticated = req.isAuthenticated();
 
@@ -309,6 +333,7 @@ module.exports = {
     }
 
     res.locals.layout = false;
-    res.render(path.resolve(__dirname, '..', 'templates/contactbox.hbs'));
+    res.locals.template = 'messenger/private';
+    res.view();
   }
 };

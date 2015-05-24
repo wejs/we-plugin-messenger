@@ -98,12 +98,18 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       loadRecord    :  true,
       permission    : 'use_messenger'
     },
-    'get /widget/messenger/:id([0-9]+)': {
+    'get /widget/messenger/private/:id([0-9]+)': {
       controller    : 'message',
       model         : 'user',
       action        : 'contactBoxIframe',
       loadRecord    :  true,
       permission    : 'use_messenger'
+    },
+    'get /widget/messenger/list': {
+      controller    : 'message',
+      action        : 'contactListIframe',
+      permission    : 'use_messenger',
+      responseType  : 'html',
     },
 
     // -- ROOM
@@ -164,6 +170,13 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       action        : 'roomIframe',
       loadRecord    :  true,
       permission    : 'find_room'
+    },
+
+    'get /widget/room-public': {
+      controller    : 'room',
+      model         : 'room',
+      action        : 'roomIframe',
+      permission    : true
     }
   });
 

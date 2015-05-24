@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <title>{{title}}</title>
+    <link rel="stylesheet" type="text/css" href="/public/plugin/we-plugin-messenger/files/we-messenger.css">
+  </head>
+  <body class="is-starting">
+
+  <div id="privateChat" class="chat">
+    <div class="chat-header">
+      <span id="#connectionStatus"></span> {{title}}
+      <span class="header-actions pull-right">
+        <button id="box-minimize" class="btn btn-close">-</button>
+        <button id="box-close" class="btn btn-close">X</button>
+      </span>
+    </div>
+    <ul id="contactsList" class="hide-on-start chat-contacts" style="height:{{height}}px;"></ul>
+    <div class="hide-on-start public-room-area">{{t "Public room"}}</div>
+    <div class="show-on-start is-starting">Starting</div>
+    <div class="hide-on-start chat-form-area"></div>
+  </div>
+
+  <script type="text/javascript" src="/public/plugin/we-core/client/shared/beforeAll/1_jquery.js"></script>
+  <script type="text/javascript" src="/public/plugin/we-core/client/shared/libs/jquery.cookie.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.2/moment-with-locales.min.js"></script>
+  <script type="text/javascript" src="/public/plugin/we-core/client/shared/beforeAll/8_socket.io.js"></script>
+  <script type="text/javascript" src="/public/plugin/we-plugin-messenger/files/we-messenger.js"></script>
+  <script type="text/javascript">
+    window.moment.locale('{{locale}}');
+    window.currentUser = {{{authenticatedJSONRecord}}};
+    window.weMessenger.initialize();
+    </script>
+</body>
+</html>
