@@ -1,34 +1,31 @@
 <html>
   <head>
     <title>{{title}}</title>
+
+    {{{render-metadata-tags}}}
+    {{{render-stylesheet-tags}}}
+    {{{render-javascript-tags 'header'}}}
+    <style type="text/css">
+      .chat-messages {
+        min-height: 50px;
+        width: 100%;
+        display: block;
+        border: 2px solid;
+        padding: 5px;
+        overflow-y: auto;
+      }
+
+      .message {
+        border-bottom: 1px dashed #dfdfdf;
+        padding: 6px;
+      }
+
+      body {
+        margin: 5px;
+      }
+    </style>
   </head>
 
-  <!-- Latest compiled and minified CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-  <!-- Optional theme -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
- <link rel="stylesheet" href="http://os.alfajango.com/css/jquery.cssemoticons.css">
-
-  <style type="text/css">
-    .chat-messages {
-      min-height: 50px;
-      width: 100%;
-      display: block;
-      border: 2px solid;
-      padding: 5px;
-      overflow-y: auto;
-    }
-
-    .message {
-      border-bottom: 1px dashed #dfdfdf;
-      padding: 6px;
-    }
-
-    body {
-      margin: 5px;
-    }
-
-  </style>
 
   <body>
   {{#if showTitle}}<h1>{{title}}</h1>{{/if}}
@@ -55,14 +52,10 @@
     </ul>
   </div>
 
-  <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery.cookie/1.4.1/jquery.cookie.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.2/moment-with-locales.min.js"></script>
-  <script type="text/javascript" src="/public/plugin/we-core/client/shared/libs/jquery.cssemoticons.js"></script>
+  {{{render-bootstrap-config}}}
+  {{{render-javascript-tags 'footer'}}}
+  {{{render-client-component-templates}}}
 
-  <script type="text/javascript" src="/public/plugin/we-core/client/shared/libs/socket.io.js"></script>
-  <!-- Latest compiled and minified JavaScript -->
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
   <script type="text/javascript">
     var weChat = {
       socket: null,
@@ -287,9 +280,11 @@
       }
     });
 
-    window.moment.locale('{{locale}}');
+    // window.moment.locale('{{locale}}');
 
-    window.currentUser = {{{currentUserJsonRecord}}};
+    {{#if currentUserJsonRecord}}
+      window.currentUser = {{{currentUserJsonRecord}}};
+    {{/if}}
     window.currentRoom = {{{jsonRecord}}};
 
     weChat.initialize();

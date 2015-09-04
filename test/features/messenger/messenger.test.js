@@ -43,7 +43,7 @@ describe('messengerFeature', function() {
           });
         });
       },
-      function connectUser2(done){
+      function connectUser2(done) {
         helpers.createAndLoginUser(function (err, result) {
           if (err) throw err;
 

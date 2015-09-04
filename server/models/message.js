@@ -34,18 +34,12 @@ module.exports = function Model(we) {
       classMethods: {},
       hooks: {
         beforeCreate: function(record, options, next) {
-          // sanitize
-          we.sanitizer.sanitizeAllAttr(record);
           // set record status do salved
           if (record.status === 'sending') {
             record.status = 'salved';
           }
           next(null, record);
-        },
-        beforeUpdate: function(record, options, next) {
-          we.sanitizer.sanitizeAllAttr(record);
-          next(null, record);
-        },
+        }
       }
     }
   }
