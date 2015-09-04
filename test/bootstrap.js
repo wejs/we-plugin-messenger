@@ -14,7 +14,7 @@ before(function(callback) {
 
     we.bootstrap({
       i18n: {
-        directory: path.join(__dirname, 'locales'),
+        directory: path.resolve(__dirname, '..', 'locales'),
         updateFiles: true
       }
     } , function(err, we) {
