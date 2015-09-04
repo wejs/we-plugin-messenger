@@ -9,6 +9,12 @@
  - public chat
  - user to room!
 
+## Helpers
+
+### we-messenger-room :
+```hbs
+{{we-messenger-room roomId=1 heigth=300 iframeHeigth=400 width='100%'}}
+```
 
 ### How to test
 
