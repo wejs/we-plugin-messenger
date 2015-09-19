@@ -1,3 +1,7 @@
 {
-	"Login": "Login"
+  "widget.title": "Widget title",
+  "widget.form.we-messenger.roomId": "Room id",
+  "widget.form.we-messenger.height": "Iframe height",
+  "widget.form.we-messenger.iframeHeight": "Room box height",
+  "widget.form.we-messenger.width": "Iframe width"
 }

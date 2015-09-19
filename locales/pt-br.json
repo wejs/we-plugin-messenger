@@ -1,0 +1,7 @@
+{
+  "widget.title": "Título do widget",
+  "widget.form.we-messenger.roomId": "Id da sala",
+  "widget.form.we-messenger.height": "Altura do iframe",
+  "widget.form.we-messenger.iframeHeight": "Altura da caixa de conversa",
+  "widget.form.we-messenger.width": "Largura do iframe"
+}
