@@ -328,7 +328,7 @@
           self.messages.push(data.message[0]);
         })
         .fail(function() {
-          alert( "error" );
+          console.log( "error" );
         })
         .always(function() {
           $('#newMessageContent').val('');
@@ -360,7 +360,7 @@
           };
         })
         .fail(function() {
-          alert( "error" );
+          console.log( "error" );
         })
         .always(function() {
           self.stopLoading();
@@ -397,7 +397,7 @@
             cb(null, data.user[0]);
           })
           .fail(function() {
-            alert( "error" );
+            console.log( "error" );
           });
         }
       }
