@@ -14,12 +14,12 @@ module.exports = {
   },
 
   roomIframe: function roomIframe(req, res) {
-    if (!res.locals.record) return res.notFound();
+    if (!res.locals.data) return res.notFound();
 
     var we = req.getWe();
 
-    res.locals.title = res.locals.record.name;
-    res.locals.jsonRecord = JSON.stringify(res.locals.record.toJSON());
+    res.locals.title = res.locals.data.name;
+    res.locals.jsonRecord = JSON.stringify(res.locals.data.toJSON());
 
     if (!req.user || !req.user.toJSON) {
       res.locals.currentUserJsonRecord = JSON.stringify(req.user);

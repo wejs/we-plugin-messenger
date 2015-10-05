@@ -12,28 +12,16 @@ module.exports = function loadPlugin(projectPath, Plugin) {
         'title': 'Use the messenger',
         'description': 'Use we.js messenger'
       },
-      'find_room': {
-        'title': 'Find room',
-        'description': 'Find and findAll rooms'
-      },
-      'create_room': {
-        'title': 'Create room',
-        'description': 'Create one room'
-      },
-      'update_room': {
-        'title': 'Update room',
-        'description': 'Update one room'
-      },
-      'delete_room': {
-        'title': 'Delete room',
-        'description': 'Delete one room'
-      },
       'create_roommessage': {
         'title': 'Create roommessage',
         'description': 'Create one room message'
       }
     }
   });
+
+  plugin.setResource({ name: 'message' });
+  plugin.setResource({ name: 'room' });
+
   // ser plugin routes
   plugin.setRoutes({
     // 'get /messenger/start': {
@@ -43,34 +31,6 @@ module.exports = function loadPlugin(projectPath, Plugin) {
     //   responseType  : 'json',
     //   permission    : 'use_messenger'
     // },
-    'get /message': {
-      controller    : 'message',
-      action        : 'find',
-      model: 'message',
-      responseType  : 'json',
-      permission    : 'use_messenger'
-    },
-    'put /message/:id': {
-      controller    : 'message',
-      action        : 'update',
-      model: 'message',
-      responseType  : 'json',
-      permission    : 'use_messenger'
-    },
-    'get /message/:id': {
-      controller    : 'message',
-      action        : 'findOne',
-      model: 'message',
-      responseType  : 'json',
-      permission    : 'use_messenger'
-    },
-    'post /message': {
-      controller    : 'message',
-      action        : 'createRecord',
-      model         : 'message',
-      responseType  : 'json',
-      permission    : 'use_messenger'
-    },
     // Return a list of messages between authenticated user and :uid user
     'get /messenger/messages/with-user/:uid?': {
       controller    : 'message',
@@ -110,38 +70,6 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       action        : 'contactListIframe',
       permission    : 'use_messenger',
       responseType  : 'html',
-    },
-
-    // -- ROOM
-    'get /room': {
-      controller    : 'room',
-      action        : 'find',
-      model         : 'room',
-      permission    : 'find_room'
-    },
-    'get /room/:id([0-9]+)': {
-      controller    : 'room',
-      model         : 'room',
-      action        : 'findOne',
-      permission    : 'find_room'
-    },
-    'post /room': {
-      controller    : 'room',
-      action        : 'create',
-      model         : 'room',
-      permission    : 'create_room'
-    },
-    'put /room/:id([0-9]+)': {
-      controller    : 'room',
-      model         : 'room',
-      action        : 'update',
-      permission    : 'update_room'
-    },
-    'delete /room/:id([0-9]+)': {
-      controller    : 'room',
-      model         : 'room',
-      action        : 'destroy',
-      permission    : 'delete_room'
     },
 
     // - roommessage

@@ -6,7 +6,6 @@
  * @description	:: Contains logic for handling requests.
  */
 var _ = require('lodash');
-var path = require('path');
 
 module.exports = {
   find: function findRecords(req, res) {
@@ -311,16 +310,16 @@ module.exports = {
   },
 
   contactBoxIframe: function roomIframe(req, res) {
-    if (!res.locals.record) return res.notFound();
+    if (!res.locals.data) return res.notFound();
     if (!req.isAuthenticated()) return res.badRequest();
-    if (req.user === res.locals.record.id) return res.badRequest();
+    if (req.user === res.locals.data.id) return res.badRequest();
 
     var we = req.getWe();
 
-    res.locals.title = res.locals.record.displayName;
+    res.locals.title = res.locals.data.displayName;
 
     res.locals.currentUserJsonRecord = JSON.stringify(req.user.toJSON());
-    res.locals.jsonRecord = JSON.stringify(res.locals.record.toJSON());
+    res.locals.jsonRecord = JSON.stringify(res.locals.data.toJSON());
 
     res.locals.height = Number(req.query.height) || 225;
 
