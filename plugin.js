@@ -69,7 +69,7 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       controller    : 'message',
       action        : 'contactListIframe',
       permission    : 'use_messenger',
-      responseType  : 'html',
+      responseType  : 'modal'
     },
 
     // - roommessage

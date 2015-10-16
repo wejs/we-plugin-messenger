@@ -286,7 +286,7 @@ module.exports = {
   },
 
   contactListIframe: function(req, res) {
-    if (!req.isAuthenticated()) return res.forbiden();
+    if (!req.isAuthenticated()) return res.forbidden();
 
     var we = req.getWe();
 
