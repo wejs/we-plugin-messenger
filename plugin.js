@@ -21,48 +21,44 @@ module.exports = function loadPlugin(projectPath, Plugin) {
 
   // ser plugin routes
   plugin.setRoutes({
-    'post /room/:roomId/member/:userId': {
+    'post /room/:roomId([0-9]+)/member/:userId([0-9]+)/invite': {
       controller    : 'room',
-      action        : 'addMember',
+      action        : 'inviteMember',
+      model         : 'room',
+      responseType  : 'json',
+      permission    : true
+    },
+    'post /room/:roomId([0-9]+)/member/accept': {
+      controller    : 'room',
+      action        : 'acceptMembership',
+      model         : 'room',
+      responseType  : 'json',
+      permission    : true
+    },
+    'post /room/:roomId([0-9]+)/member/:userId([0-9]+)/remove': {
+      controller    : 'room',
+      action        : 'removeMember',
+      model         : 'room',
+      responseType  : 'json',
+      permission    : true
+    },
+    'post /room/:roomId([0-9]+)/member/leave': {
+      controller    : 'room',
+      action        : 'leave',
       model         : 'room',
       responseType  : 'json',
       permission    : true
     },
 
-    // 'get /messenger/start': {
+    // Send a message to show writing status
+    // 'post /messenger/user/writing': {
     //   controller    : 'message',
-    //   action        : 'start',
+    //   action        : 'emitIamWriting',
     //   model         : 'message',
     //   responseType  : 'json',
+    //   loadRecord    :  true,
     //   permission    : 'use_messenger'
     // },
-    // Return a list of messages between authenticated user and :uid user
-    'get /messenger/messages/with-user/:uid?': {
-      controller    : 'message',
-      action        : 'messagesWithUser',
-      model         : 'message',
-      responseType  : 'json',
-      permission    : 'use_messenger',
-      loadRecord    :  true
-    },
-    // Return messages without toIds and roomIds
-    'get /messenger/messages/public': {
-      controller    : 'message',
-      action        : 'getPublicMessages',
-      model         : 'message',
-      responseType  : 'json',
-      loadRecord    :  true,
-      permission    : 'use_messenger'
-    },
-    // Send a message to show writing status
-    'post /messenger/user/writing': {
-      controller    : 'message',
-      action        : 'emitIamWriting',
-      model         : 'message',
-      responseType  : 'json',
-      loadRecord    :  true,
-      permission    : 'use_messenger'
-    },
     'get /widget/messenger/private/:id([0-9]+)': {
       controller    : 'message',
       model         : 'user',

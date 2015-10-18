@@ -133,21 +133,108 @@ module.exports = {
     });
   },
 
-  // TODO
-  getUserRooms: function getUserRooms(req, res) {
-    // res.we.db.models.room.findAll({
-    //   where: {  }
-    // }).then(function (r) {
-    //   res.ok(r);
-    // }).catch(res.serverError);
+  inviteMember: function (req ,res) {
+    if (!req.isAuthenticated()) return res.forbidden();
+
+    req.we.db.models.room.findById(req.params.roomId)
+    .then(function (room) {
+      if (!room) return res.notFound();
+      room.haveAccess(req.user, function(err, have) {
+        if (err) return res.serverError();
+        if (!have) return res.forbidden();
+
+
+        req.we.db.models.user.findById(req.params.userId)
+        .then(function (user) {
+          room.hasMember(user).then(function (have){
+            if (have) return res.badRequest();
+
+            room.addInvite(user).then(function(){
+              // TODO add notification
+
+              res.ok();
+            }).catch(res.queryError);
+          }).catch(res.queryError);
+
+        }).catch(res.queryError);
+      });
+    }).catch(res.queryError);
   },
 
-  addMember: function addMember(req ,res) {
-    req.we.db.models.findbyId(req.params.roomId)
+  acceptMembership: function (req ,res) {
+    if (!req.isAuthenticated()) return res.forbidden();
+
+    req.we.db.models.room.findById(req.params.roomId)
     .then(function (room) {
       if (!room) return res.notFound();
 
+      room.hasInvite(req.user).then(function (invite) {
+        if (!invite) return res.notFound();
 
+        room.removeInvite(req.user).then(function() {
+          room.addMember(req.user).then(function() {
+
+            // TODO add notification
+
+            res.ok();
+          }).catch(req.queryError);
+        }).catch(req.queryError);
+      }).catch(req.queryError);
+    }).catch(res.queryError);
+  },
+
+  /**
+   * Remove one member from room, need be room admin
+   *
+   * @param  {Object} req
+   * @param  {Object} res
+   */
+  removeMember: function (req ,res) {
+    if (!req.isAuthenticated()) return res.forbidden();
+    // load the room
+    req.we.db.models.room.findById(req.params.roomId)
+    .then(function (room) {
+      if (!room) return res.notFound();
+      // check if current user is admin
+      room.isAdmin(req.user, function (err, isAdmin) {
+        if(err) return res.serverError(err);
+        if(!isAdmin) return res.forbidden();
+        // load the user
+        req.we.db.models.user.findById(req.params.userId)
+        .then(function (user){
+          if (!user) return res.notFound();
+          // check if user to remove is member
+          room.hasMember(user).then(function (have){
+            if (!have) return res.notFound();
+
+            room.removeMember(user).then(function() {
+              // TODO send a socket.io event to alert this exit
+
+              return res.ok();
+            }).catch(res.queryError);
+          }).catch(res.queryError);
+
+        }).catch(res.queryError);
+      });
+    }).catch(res.queryError);
+  },
+
+  leave: function (req ,res) {
+    if (!req.isAuthenticated()) return res.forbidden();
+
+    req.we.db.models.room.findById(req.params.roomId)
+    .then(function (room) {
+      if (!room) return res.notFound();
+      // check if user is in room
+      room.haveMember(req.user).then(function (have){
+        if (!have) return res.notFound();
+        // then remove the user from room
+        room.removeMember(req.user).then(function(){
+          // TODO send a socket.io event to alert connected room members
+
+          res.ok();
+        }).catch(req.queryError);
+      });
     }).catch(res.queryError);
   },
 

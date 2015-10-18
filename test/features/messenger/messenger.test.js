@@ -192,7 +192,6 @@ describe('messengerFeature', function() {
       });
     });
 
-
     it ('post /room/:id/message should create one message', function(done){
       var room = salvedRooms[0];
       var message = stubs.messageStub(room.id);
@@ -239,6 +238,31 @@ describe('messengerFeature', function() {
       .end(function (err) {
         if (err) throw err;
         done();
+      });
+    });
+
+    it ('user 1 should invite user2 to room and user 2 accept', function(done) {
+      var room = salvedRooms[0];
+
+      authenticatedRequest.post('/room/'+room.id+'/member/'+salvedUser2.id+ '/invite')
+      .set('Accept', 'application/json')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) throw err;
+        room.hasInvite(salvedUser2).then(function (have){
+          assert(have);
+
+          authenticatedRequest2.post('/room/'+room.id+'/member/accept')
+          .set('Accept', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+
+            room.hasMember(salvedUser2).then(function(isMember){
+              assert(isMember);
+              done();
+            }).catch(done);
+          });
+        }).catch(done);
       });
     });
   });

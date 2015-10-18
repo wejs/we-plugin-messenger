@@ -42,6 +42,13 @@ module.exports = function Model(we) {
     },
 
     associations: {
+      invites: {
+        type: 'belongsToMany',
+        model: 'user',
+        inverse: 'rooms',
+        through: 'rooms_invites'
+      },
+
       members: {
         type: 'belongsToMany',
         model: 'user',

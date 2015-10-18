@@ -51,57 +51,6 @@ module.exports = {
       return res.ok();
     });
   },
-  /**
-   * Return last messages between logged in user and :uid user
-   */
-  messagesWithUser: function (req,res) {
-    if(!req.isAuthenticated()) return res.forbidden();
-    var we = req.getWe();
-    var uid = req.params.uid;
-    // return forbiden
-    if(!uid) return res.notFound('No messages found');
-
-    res.locals.query.where = {
-      $or: [{
-        fromId: req.params.uid,
-        toId: req.user.id
-      }, {
-        fromId: req.user.id,
-        toId: req.params.uid
-      }]
-    };
-
-    we.db.models.message.find(res.locals.query.where)
-    .then(function (messages) {
-      // Found multiple messages!
-      if (messages) {
-        res.json({
-          messages: messages
-        });
-      }
-    }).catch(req.serverError);
-  },
-
-  /**
-   * Return last messages between logged in user and :uid user
-   */
-  getPublicMessages: function (req, res) {
-    var we = req.getWe();
-
-    res.locals.query.where = {
-      $or: [
-        { fromId: null },
-        { toId: null }
-      ]
-    };
-
-    we.db.models.message.find(res.locals.query.where)
-    .then(function (messages) {
-      res.json({
-        messages: messages
-      });
-    }).catch(res.serverError);
-  },
 
   /**
    * Get contact list
