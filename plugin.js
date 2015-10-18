@@ -11,19 +11,24 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       'use_messenger': {
         'title': 'Use the messenger',
         'description': 'Use we.js messenger'
-      },
-      'create_roommessage': {
-        'title': 'Create roommessage',
-        'description': 'Create one room message'
       }
     }
   });
 
-  plugin.setResource({ name: 'message' });
   plugin.setResource({ name: 'room' });
+
+  plugin.setResource({ name: 'message', parent: 'room' });
 
   // ser plugin routes
   plugin.setRoutes({
+    'post /room/:roomId/member/:userId': {
+      controller    : 'room',
+      action        : 'addMember',
+      model         : 'room',
+      responseType  : 'json',
+      permission    : true
+    },
+
     // 'get /messenger/start': {
     //   controller    : 'message',
     //   action        : 'start',
@@ -70,26 +75,6 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       action        : 'contactListIframe',
       permission    : 'use_messenger',
       responseType  : 'modal'
-    },
-
-    // - roommessage
-    'get /roommessage': {
-      controller    : 'roommessage',
-      action        : 'find',
-      model         : 'roommessage',
-      permission    : 'find_room'
-    },
-    'get /roommessage/:id([0-9]+)': {
-      controller    : 'roommessage',
-      model         : 'roommessage',
-      action        : 'findOne',
-      permission    : 'find_room'
-    },
-    'post /roommessage': {
-      controller    : 'roommessage',
-      action        : 'create',
-      model         : 'roommessage',
-      permission    : 'create_roommessage'
     },
 
     'get /widget/room/:id([0-9]+)': {

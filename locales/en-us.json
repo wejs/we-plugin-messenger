@@ -6,5 +6,8 @@
 	"widget.form.we-messenger.width": "Iframe width",
 	"Login": "Login",
 	"room.find": "room.find",
-	"room.findOne": "room.findOne"
+	"room.findOne": "room.findOne",
+	"message.find": "message.find",
+	"messenger.roomId.required": "messenger.roomId.required",
+	"ER_BAD_FIELD_ERROR: Unknown column 'members.userId' in 'on clause'": "ER_BAD_FIELD_ERROR: Unknown column 'members.userId' in 'on clause'"
 }

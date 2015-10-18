@@ -5,7 +5,7 @@
   "main": "plugin.js",
   "scripts": {
     "lint": "./node_modules/.bin/jshint .",
-    "test": "NODE_ENV=test LOG_LV=info ./node_modules/.bin/mocha test/bootstrap.js test/**/*.test.js",
+    "test": "NODE_ENV=test LOG_LV=info ./node_modules/.bin/mocha test/bootstrap.js test/**/*.test.js -b ",
     "prepublish": "npm prune"
   },
   "dependencies": {

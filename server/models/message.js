@@ -1,21 +1,13 @@
 /**
- * Messages
+ * Message
  *
  * @module      :: Model
- * @description :: A short summary of how this model works and what it represents.
+ * @description :: All messages is send to one room
  *
  */
 module.exports = function Model(we) {
   var model = {
     definition: {
-      fromId: {
-        type: we.db.Sequelize.BIGINT,
-        allowNull: false
-      },
-      // send to user id
-      toId: {
-        type: we.db.Sequelize.BIGINT,
-      },
       content: {
         type: we.db.Sequelize.TEXT,
         allowNull: false
@@ -30,6 +22,17 @@ module.exports = function Model(we) {
       }
     },
 
+    associations: {
+      creator:  {
+        type: 'belongsTo',
+        model: 'user'
+      },
+      room: {
+        type: 'belongsTo',
+        model: 'room'
+      }
+    },
+
     options: {
       classMethods: {},
       hooks: {
@@ -39,6 +42,16 @@ module.exports = function Model(we) {
             record.status = 'salved';
           }
           next(null, record);
+        },
+        afterCreate: function(record, options, next) {
+          // socket.io now is avaible or started
+          if (!we.io || !we.io.sockets) return next();
+          // send to subscribed users
+          we.io.sockets.in('room:' + record.roomId)
+          .emit( 'room:message:created', {
+            message: record
+          });
+          next();
         }
       }
     }

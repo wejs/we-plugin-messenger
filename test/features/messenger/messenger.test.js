@@ -32,15 +32,21 @@ describe('messengerFeature', function() {
           authenticatedRequest = result.authenticatedRequest;
           authToken = result.token;
 
-          client = ioClient.connect(connectUrl, {
-            transports: ['websocket'],
-            'force new connection': true,
-            query: 'authToken=' + authToken
-          });
+          we.db.models.accesstoken.create({
+            userId: salvedUser.id, tokenType: 'passportToken'
+          }).then(function (token){
 
-          client.once('connect', function () {
-            done();
-          });
+            client = ioClient.connect(connectUrl, {
+              transports: ['websocket'],
+              'force new connection': true,
+              query: 'authToken=' + token.token
+            });
+
+            client.once('connect', function () {
+              done();
+            });
+
+          }).catch(done);
         });
       },
       function connectUser2(done) {
@@ -52,190 +58,200 @@ describe('messengerFeature', function() {
           authenticatedRequest2 = result.authenticatedRequest;
           authToken2 = result.token;
 
-          client2 = ioClient.connect(connectUrl,  {
-            transports: ['websocket'],
-            'force new connection': true,
-            query: 'authToken=' + authToken2
-          });
-          client2.once('connect', function () {
-            done();
-          });
+          we.db.models.accesstoken.create({
+            userId: salvedUser2.id, tokenType: 'passportToken'
+          }).then(function (token){
+            client2 = ioClient.connect(connectUrl,  {
+              transports: ['websocket'],
+              'force new connection': true,
+              query: 'authToken=' + token.token
+            });
+            client2.once('connect', function () {
+              done();
+            });
+          }).catch(done);
         });
       }
     ], done);
   });
 
-  describe('Messenger', function() {
+  describe('privateRoom', function() {
+    var salvedRooms = [];
     before(function (done) {
-      async.parallel([
-        function startClient1Messenger (done) {
-          client.once('is:online', function (message) {
-            assert.equal(message.messengerStatus, 'online');
-            assert.equal(message.id, salvedUser.id);
-            assert.equal(message.username, salvedUser.username);
-            done();
-          });
-          client.emit('messenger:start:list');
-          client.emit('messenger:private:talk:start');
-        },
-        function startClient2Messenger (done) {
-          client2.once('is:online', function (message) {
-            assert.equal(message.messengerStatus, 'online');
-            assert.equal(message.id, salvedUser2.id);
-            assert.equal(message.username, salvedUser2.username);
-            done();
-          });
-          client2.emit('messenger:start:list');
-          client2.emit('messenger:private:talk:start');
-        }
-      ], done);
-    });
-
-    it ('post /message should create one message', function(done){
-      var message = stubs.messageStub();
-      message.toId = salvedUser2.id;
-
-      authenticatedRequest.post('/message')
-      .send(message)
-      .set('Accept', 'application/json')
-      .expect(201)
-      .end(function (err, res) {
-        if (err) throw err;
-        assert(res.body.message);
-        assert( _.isArray(res.body.message) , 'message not is array');
-        assert(res.body.meta);
-        assert(res.body.message[0].id);
-        assert.equal(res.body.message[0].toId, salvedUser2.id);
-        assert.equal(res.body.message[0].fromId, salvedUser.id);
-        assert.equal(res.body.message[0].content, message.content);
-        done();
-      });
-    });
-    it ('post /message should create one message and contact receive the socket.io message', function(done){
-      var message = stubs.messageStub();
-      message.toId = salvedUser2.id;
-
-      client2.once('messenger:private:message:created', function (data) {
-        assert.equal(data.message.toId, salvedUser2.id);
-        assert.equal(data.message.fromId, salvedUser.id);
-        done();
-      });
-
-      authenticatedRequest.post('/message')
-      .send(message)
-      .set('Accept', 'application/json')
-      .expect(201)
-      .end(function (err, res) {
-        if (err) throw err;
-        assert(res.body.message);
-      });
-    });
-
-    it ('get /message?uid=:userId should get message list', function(done) {
-      async.each([ stubs.messageStub(), stubs.messageStub(), stubs.messageStub() ],
-      function (m, next) {
-        m.toId = salvedUser2.id;
-        m.fromId = salvedUser.id;
-        we.db.models.message.create(m).then(function(){
+      var rooms = [
+        stubs.roomStub(), stubs.roomStub(), stubs.roomStub(), stubs.roomStub()
+      ];
+      async.each(rooms, function (room, next) {
+        room.creatorId = salvedUser.id;
+        room.type = 'private';
+        we.db.models.room.create(room).then(function (r) {
+          salvedRooms.push(r);
           next();
         }).catch(next);
-      }, function (err) {
-        if (err) throw err;
+      }, done);
+    });
 
-        authenticatedRequest.get('/message?uid=' + salvedUser2.id)
+    it ('get /room should get rooms list with private room created by same user', function(done) {
+      var room = stubs.roomStub();
+      room.type = 'private';
+      room.creatorId = salvedUser.id;
+      we.db.models.room.create(room).then(function (r) {
+        authenticatedRequest.get('/room')
         .set('Accept', 'application/json')
         .expect(200)
         .end(function (err, res) {
-          if (err) throw err;
-          assert(res.body.message);
-          assert( _.isArray(res.body.message) , 'message not is array');
-          assert(res.body.meta.count > 0);
-
-          res.body.message.forEach(function(m) {
-            assert( (m.toId === salvedUser2.id) );
+          if (err) return done(err);
+          assert(res.body.room);
+          var found = false;
+          res.body.room.forEach(function (sr){
+            if (sr.id == r.id) found = true;
           });
 
+          assert(found, 'private room not found in response');
+          // should
           done();
         });
       });
     });
 
-    it ('messenger:public:message:send should send one message to public room', function(done) {
-      var message = stubs.messageStub();
-      client2.once('messenger:public:message:created', function (data) {
-        assert(data.message.id);
-        assert.equal(message.content, data.message.content);
-        assert.equal(data.message.fromId, salvedUser.id);
-        done();
-      });
-      client.emit('messenger:public:message:send', message);
-    });
-
-    it('get /message get public messages list', function(done) {
-      authenticatedRequest.get('/message?limit=' + 10)
-      .set('Accept', 'application/json')
-      .expect(200)
-      .end(function (err, res) {
-        if (err) return done(err);
-        assert.equal(200, res.status);
-        assert(res.body.message);
-        assert( _.isArray(res.body.message) , 'message not is array');
-        assert(res.body.meta);
-        done();
-      });
-    });
-
-    it ('messenger:private:message:send should send one message do salvedUser2', function(done) {
-      var message = stubs.messageStub();
-      client2.once('messenger:private:message:created', function (data) {
-        assert(data.message.id);
-        assert.equal(message.content, data.message.content);
-        assert.equal(data.message.fromId, salvedUser.id);
-        assert.equal(data.message.toId, salvedUser2.id);
-        done();
-      });
-      message.toId = salvedUser2.id;
-      client.emit('messenger:private:message:send', message);
-    });
-
-    it('get /message?uid=:userId get private messages list', function(done) {
-      authenticatedRequest.get('/message?limit=10&uid='+salvedUser2.id)
-      .set('Accept', 'application/json')
-      .expect(200)
-      .end(function (err, res) {
-        if (err) return done(err);
-        assert.equal(200, res.status);
-        assert(res.body.message);
-        assert( _.isArray(res.body.message) , 'message not is array');
-        assert(res.body.meta);
-
-        res.body.message.forEach(function(m){
-          assert( (salvedUser2.id === m.toId || salvedUser2 .id === m.fromId) );
-          assert( (salvedUser.id === m.toId || salvedUser.id === m.fromId) );
+    it ('get /room should get rooms list without the private room created by user1', function(done) {
+      var room = stubs.roomStub();
+      room.type = 'private';
+      room.creatorId = salvedUser.id;
+      we.db.models.room.create(room).then(function (r) {
+        authenticatedRequest2.get('/room')
+        .set('Accept', 'application/json')
+        .expect(200)
+        .end(function (err, res) {
+          if (err) return done(err);
+          assert(res.body.room);
+          res.body.room.forEach(function (sr){
+            assert(sr.id != r.id);
+          });
+          // should
+          done();
         });
-
+      });
+    });
+    it ('get /room/:id should get one room', function(done){
+      var room = salvedRooms[0];
+      authenticatedRequest.get('/room/'+ room.id)
+      .set('Accept', 'application/json')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+        assert(res.body.room);
+        assert( _.isArray(res.body.room) , 'room not is array');
+        assert.equal(res.body.room[0].id, room.id);
+        assert.equal(res.body.room[0].name, room.name);
+        assert.equal(res.body.room[0].description, room.description);
+        done();
+      });
+    });
+    it ('get /room/:id should return forbidden for user how dont are in this room', function(done){
+      var room = salvedRooms[0];
+      authenticatedRequest2.get('/room/'+ room.id)
+      .set('Accept', 'application/json')
+      .expect(403)
+      .end(function (err) {
+        if (err) throw err;
+        done();
+      });
+    });
+    it ('update /room/:id should update one room if user is manager', function(done) {
+      var room = salvedRooms[0];
+      var newRoomName = 'new room Name';
+      authenticatedRequest.put('/room/'+ room.id)
+      .send({
+        name: newRoomName
+      })
+      .set('Accept', 'application/json')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+        assert(res.body.room);
+        assert( _.isArray(res.body.room) , 'room not is array');
+        assert.equal(res.body.room[0].id, room.id);
+        assert.equal(res.body.room[0].name, newRoomName);
+        assert.equal(res.body.room[0].description, room.description);
+        room.name = newRoomName;
         done();
       });
     });
 
-    it ('messenger:stop', function(done) {
-      client.once('is:offline', function (message) {
-        assert.equal(message.id, salvedUser.id);
+    it ('update /room/:id should return forbidden if user not is manager', function(done) {
+      var room = salvedRooms[0];
+      var newRoomName = 'new room Name';
+      authenticatedRequest2.put('/room/'+ room.id)
+      .send({ name: newRoomName })
+      .set('Accept', 'application/json')
+      .expect(403)
+      .end(function (err) {
+        if (err) throw err;
         done();
       });
-      client.emit('messenger:stop');
+    });
+
+
+    it ('post /room/:id/message should create one message', function(done){
+      var room = salvedRooms[0];
+      var message = stubs.messageStub(room.id);
+      authenticatedRequest.post('/room/'+room.id+'/message')
+      .send(message)
+      .set('Accept', 'application/json')
+      .expect(201)
+      .end(function (err, res) {
+        if (err) throw err;
+
+        assert(res.body.message);
+        assert( _.isArray(res.body.message) , 'message not is array');
+        assert(res.body.meta);
+        assert(res.body.message[0].id);
+        assert.equal(res.body.message[0].content, message.content);
+
+        done();
+      });
+    });
+    it ('get /room/:id/message should get messages list in room', function (done) {
+      var room = salvedRooms[0];
+      authenticatedRequest.get('/room/'+room.id+'/message')
+      .set('Accept', 'application/json')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) throw err;
+
+        assert(res.body.message);
+        assert( _.isArray(res.body.message) , 'message not is array');
+        assert(res.body.meta.count > 0);
+        done();
+      });
+    });
+
+    it ('post /room/:id/message should return forbidden for user how dont are in room', function(done) {
+      var room = salvedRooms[1];
+      var message = stubs.messageStub(room.id);
+      message.roomId = room.id;
+
+      authenticatedRequest2.post('/room/'+room.id+'/message')
+      .send(message)
+      .set('Accept', 'application/json')
+      .expect(403)
+      .end(function (err) {
+        if (err) throw err;
+        done();
+      });
     });
   });
 
-  describe('Chat', function() {
+  describe('publicRoom', function() {
     var salvedRooms = [];
-    before(function(done) {
+    before(function (done) {
       var rooms = [
         stubs.roomStub(), stubs.roomStub(), stubs.roomStub(), stubs.roomStub()
       ];
-      async.each(rooms, function(room, next) {
+      async.each(rooms, function (room, next) {
         room.creatorId = salvedUser.id;
-        we.db.models.room.create(room).then(function(r) {
+        we.db.models.room.create(room).then(function (r) {
           salvedRooms.push(r);
           next();
         }).catch(next);
@@ -288,111 +304,29 @@ describe('messengerFeature', function() {
         done();
       });
     });
-    it ('update /room/:id should update one room', function(done) {
-      var room = salvedRooms[0];
-      var newRoomName = 'new room Name';
-      authenticatedRequest.put('/room/'+ room.id)
-      .send({
-        name: newRoomName
-      })
-      .set('Accept', 'application/json')
-      .expect(200)
-      .end(function (err, res) {
-        if (err) return done(err);
-        assert(res.body.room);
-        assert( _.isArray(res.body.room) , 'room not is array');
-        assert.equal(res.body.room[0].id, room.id);
-        assert.equal(res.body.room[0].name, newRoomName);
-        assert.equal(res.body.room[0].description, room.description);
-        room.name = newRoomName;
-        done();
-      });
-    });
 
-    it ('delete /room/:id should delete one room');
-
-    it ('post /roommessage should create one roommessage', function(done){
-      var message = stubs.messageStub();
-      authenticatedRequest.post('/roommessage')
-      .send(message)
-      .set('Accept', 'application/json')
-      .expect(201)
-      .end(function (err, res) {
-        if (err) return done(err);
-
-        assert(res.body.roommessage);
-        assert( _.isArray(res.body.roommessage) , 'roommessage not is array');
-        assert(res.body.meta);
-        assert(res.body.roommessage[0].id);
-        assert.equal(res.body.roommessage[0].content, message.content);
-
-        done();
-      });
-    });
-    it ('get /roommessage should get roommessage list', function(done) {
-      authenticatedRequest.get('/roommessage')
-      .set('Accept', 'application/json')
-      .expect(200)
-      .end(function (err, res) {
-        if (err) return done(err);
-        assert(res.body.roommessage);
-        assert( _.isArray(res.body.roommessage) , 'roommessage not is array');
-        assert(res.body.meta.count > 0);
-        done();
-      });
-    });
-
-    it ('messenger:room:subscribe should send the user joined message ', function(done) {
+    it ('room:subscribe should send the user joined message ', function(done) {
       var room = salvedRooms[2];
-      client.once('messenger:room:user:joined', function (data) {
+      client.once('room:user:joined', function (data) {
         assert.equal(data.id, salvedUser2.id);
         done();
       });
-      client.emit('messenger:room:subscribe', { roomId: room.id });
-      client2.emit('messenger:room:subscribe', { roomId: room.id });
+      client.emit('room:subscribe', { roomId: room.id });
+      client2.emit('room:subscribe', { roomId: room.id });
     });
 
-    it ('messenger:room:subscribe should subscribe user1 in room and receive one message from user2', function(done) {
-      var room = salvedRooms[1];
-      var message = stubs.messageStub();
-      message.roomId = room.id;
-
-      client.once('messenger:room:message:created', function (data) {
-        assert(data.roommessage.id);
-        assert.equal(message.content, data.roommessage.content);
-        assert.equal(data.roommessage.roomId, room.id);
-        assert.equal(data.roommessage.creatorId, salvedUser2.id);
-        done();
-      });
-
-      client.emit('messenger:room:subscribe', { roomId: room.id });
-
-      authenticatedRequest2.post('/roommessage')
-      .send(message)
-      .set('Accept', 'application/json')
-      .expect(201)
-      .end(function (err, res) {
-        if (err) return done(err);
-        assert(res.body.roommessage);
-        assert(res.body.meta);
-        assert(res.body.roommessage[0].id);
-        assert.equal(res.body.roommessage[0].content, message.content);
-      });
-    });
-
-    it ('/roommessage?roomId=:roomId should get room messages');
-
-    it ('messenger:room:unsubscribe', function(done) {
+    it ('room:unsubscribe', function(done) {
       var room = salvedRooms[2];
-      client.emit('messenger:room:subscribe', { roomId: room.id });
+      client.emit('room:subscribe', { roomId: room.id });
 
-      client2.once('messenger:room:user:left', function (data) {
+      client2.once('room:user:left', function (data) {
         assert.equal(data.id, salvedUser.id);
         done();
       });
 
-      client2.emit('messenger:room:subscribe', { roomId: room.id });
-      client.emit('messenger:room:unsubscribe', { roomId: room.id });
+      client2.emit('room:subscribe', { roomId: room.id });
+      client.emit('room:unsubscribe', { roomId: room.id });
     });
+
   });
 });
