@@ -226,7 +226,7 @@ module.exports = {
     .then(function (room) {
       if (!room) return res.notFound();
       // check if user is in room
-      room.haveMember(req.user).then(function (have){
+      room.hasMember(req.user).then(function (have){
         if (!have) return res.notFound();
         // then remove the user from room
         room.removeMember(req.user).then(function(){
@@ -236,6 +236,28 @@ module.exports = {
         }).catch(req.queryError);
       });
     }).catch(res.queryError);
+  },
+
+  findMembers: function(req, res) {
+    req.we.db.models.room.findById(req.params.roomId)
+    .then(function (room) {
+      if (!room) return res.notFound();
+
+      room.haveAccess(req.user, function (err, have) {
+        if (err) return res.serverError();
+        if (!have) return res.forbidden();
+
+        room.getMembers().then(function(members){
+          res.locals.data = members;
+
+          room.getMembersCount().then(function(count){
+            res.locals.metadata.count = count;
+            return res.ok();
+          }).catch(res.queryError);// getMembersCount
+
+        }).catch(res.queryError);// getMembers
+      });
+    }).catch(res.queryError); // findById
   },
 
   roomIframe: function roomIframe(req, res) {

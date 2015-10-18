@@ -50,6 +50,14 @@ module.exports = function loadPlugin(projectPath, Plugin) {
       permission    : true
     },
 
+    'get /room/:roomId([0-9]+)/member': {
+      controller    : 'room',
+      action        : 'findMembers',
+      model         : 'user',
+      responseType  : 'json',
+      permission    : true
+    },
+
     // Send a message to show writing status
     // 'post /messenger/user/writing': {
     //   controller    : 'message',

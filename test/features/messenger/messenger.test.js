@@ -256,13 +256,34 @@ describe('messengerFeature', function() {
           .set('Accept', 'application/json')
           .expect(200)
           .end(function (err, res) {
+            if (err) throw err;
 
             room.hasMember(salvedUser2).then(function(isMember){
               assert(isMember);
-              done();
+              // cleanup
+              room.removeMember(salvedUser2).then(function(){
+                done();
+              }).catch(done);
             }).catch(done);
           });
         }).catch(done);
+      });
+    });
+
+    it ('get /room/:id/members should return mebers list for member', function (done) {
+      var room = salvedRooms[1];
+
+      authenticatedRequest.get('/room/'+room.id+'/member')
+      .set('Accept', 'application/json')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) throw err;
+
+        assert(res.body.user);
+
+        // TODO check if all users is members
+
+        done();
       });
     });
   });

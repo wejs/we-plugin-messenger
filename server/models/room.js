@@ -89,6 +89,19 @@ module.exports = function Model(we) {
             if (!membership || !membership.isAdmin) return cb(null, false);
             cb(null, membership);
           }).catch(cb);
+        },
+
+        /**
+         * Get room members count
+         *
+         * @return {Object}      sequelize count promisse
+         */
+        getMembersCount: function getMembersCount() {
+          return we.db.models.rooms_members.count({
+            where: {
+              roomId: this.id
+            }
+          });
         }
       },
 
