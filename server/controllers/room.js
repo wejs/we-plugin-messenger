@@ -68,7 +68,17 @@ module.exports = {
       if (err) return res.serverError(err);
       if (!have) return res.forbidden();
 
-      return res.ok();
+      if (!req.isAuthenticated())
+        return res.ok();
+
+      req.we.db.models.rooms_members.findOne({
+        where: {
+          userId: req.user.id,
+          roomId: res.locals.id
+        }
+      }).then(function  (membership){
+        res.locals.data.membership = membership;
+      }).catch(res.queryError);
     });
   },
 
