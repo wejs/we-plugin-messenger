@@ -38,6 +38,13 @@ module.exports = function Model(we) {
       creatorId: {
         type: we.db.Sequelize.BIGINT,
         allowNull: false
+      },
+      /**
+       * Membership virtual var for store and send membership in response
+       * @type {Object}
+       */
+      membership: {
+        type: we.db.Sequelize.VIRTUAL
       }
     },
 
@@ -58,6 +65,10 @@ module.exports = function Model(we) {
     },
 
     options: {
+      imageFields: {
+        logo: { formFieldMultiple: false }
+      },
+
       classMethods: {},
       instanceMethods: {
         haveAccess: function haveAccess(user, cb) {
