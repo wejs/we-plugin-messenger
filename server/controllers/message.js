@@ -16,12 +16,7 @@ module.exports = {
         if (err) return res.serverError(err);
         if (!can) return res.forbidden();
 
-        res.locals.query.where = {
-          $or: [
-            { roomId: room.id },
-            { roomId: null }
-          ]
-        };
+        res.locals.query.where.roomId = room.id;
 
         req.we.db.models.message.findAll(res.locals.query)
         .then(function (messages) {
