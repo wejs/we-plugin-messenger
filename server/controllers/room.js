@@ -8,6 +8,12 @@
 var path = require('path');
 
 module.exports = {
+  /**
+   * Create a private or public room
+   *
+   * @param  {Object} req
+   * @param  {Object} res
+   */
   create: function create(req, res) {
     if (!res.locals.template) res.locals.template = res.locals.model + '/' + 'create';
 
@@ -19,6 +25,11 @@ module.exports = {
 
     if (req.method === 'POST') {
       if (req.isAuthenticated()) req.body.creatorId = req.user.id;
+
+      if (req.body.type != 'private' || req.body.type != 'public') {
+        // default is public
+        req.body.type = 'public';
+      }
 
       // set temp record for use in validation errors
       res.locals.data = req.query;
@@ -78,6 +89,8 @@ module.exports = {
         }
       }).then(function  (membership){
         res.locals.data.membership = membership;
+
+        res.ok();
       }).catch(res.queryError);
     });
   },
@@ -101,6 +114,11 @@ module.exports = {
       if (!isAdmin) return res.forbidden();
 
       if (req.we.config.updateMethods.indexOf(req.method) > -1) {
+
+        if (req.body.type == 'contact') {
+          // never update room of type contact
+          delete req.body.type;
+        }
 
         record.updateAttributes(req.body)
         .then(function() {

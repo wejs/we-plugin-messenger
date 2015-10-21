@@ -24,7 +24,7 @@ module.exports = function Model(we) {
       /**
        * Room type
        *
-       * contact, private, restrict, public
+       * contact, private, public
        */
       type: {
         type: we.db.Sequelize.STRING,
@@ -37,7 +37,8 @@ module.exports = function Model(we) {
        */
       creatorId: {
         type: we.db.Sequelize.BIGINT,
-        allowNull: false
+        allowNull: false,
+        formFieldType: null
       },
       /**
        * Membership virtual var for store and send membership in response
