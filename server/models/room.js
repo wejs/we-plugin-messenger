@@ -44,7 +44,8 @@ module.exports = function Model(we) {
        * @type {Object}
        */
       membership: {
-        type: we.db.Sequelize.VIRTUAL
+        type: we.db.Sequelize.VIRTUAL,
+        formFieldType: null
       }
     },
 
