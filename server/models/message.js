@@ -35,6 +35,18 @@ module.exports = function Model(we) {
 
     options: {
       classMethods: {},
+      instanceMethods: {
+        /**
+         *et url path instance method
+         *
+         * @return {String} url path
+         */
+        getUrlPath: function getUrlPath() {
+          return we.router.urlTo(
+            this.__options.name.singular + '.findOne', [this.roomId, this.id]
+          );
+        }
+      },
       hooks: {
         beforeCreate: function(record, options, next) {
           // set record status do salved
