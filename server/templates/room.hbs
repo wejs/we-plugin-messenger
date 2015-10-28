@@ -89,13 +89,13 @@
 
         socket.on('connect', function(){
           socket.emit('messenger:start');
-          socket.emit('messenger:room:subscribe', { roomId: currentRoom.id });
+          socket.emit('room:subscribe', { roomId: currentRoom.id });
         });
 
-        socket.on('messenger:room:message:created', function(data) {
-          if (!self.messageExists(data.roommessage.id)) {
-            self.newMessage(data.roommessage);
-            self.messages.push(data.roommessage);
+        socket.on('room:message:created', function(data) {
+          if (!self.messageExists(data.message.id)) {
+            self.newMessage(data.message);
+            self.messages.push(data.message);
             self.incrementCount();
           }
         });
@@ -184,13 +184,13 @@
         var content = $.trim($('#newMessageContent').val());
         if (!content) return;
 
-        $.post('/roommessage', {
+        $.post('/room/'+currentRoom.id+'/message', {
           content: content,
           roomId: currentRoom.id
         })
         .done(function(data) {
-          self.newMessage(data.roommessage[0]);
-          self.messages.push(data.roommessage[0]);
+          self.newMessage(data.message);
+          self.messages.push(data.message);
         })
         .fail(function() {
           console.log( "error" );
@@ -204,17 +204,16 @@
 
       findRoomMessages: function() {
         var self = this;
-        return $.get('/roommessage', {
-          roomId: currentRoom.id,
+        return $.get('/room/'+currentRoom.id+'/message', {
           limit: self.limit,
           offset: self.offset,
           order: 'id DESC'
         })
         .done(function(data) {
           self.setCount(data.meta.count);
-          for (var i = 0; i <= data.roommessage.length-1; i++) {
-            self.newMessage(data.roommessage[i]);
-            self.messages.push(data.roommessage[i]);
+          for (var i = 0; i <= data.message.length-1; i++) {
+            self.newMessage(data.message[i]);
+            self.messages.push(data.message[i]);
           };
         })
         .fail(function() {
@@ -246,12 +245,12 @@
       findUser: function(uid, cb) {
         if (this.loadingUsers[uid]) {
           this.loadingUsers[uid].done(function(data) {
-            cb(null, data.user[0]);
+            cb(null, data.user);
           });
         } else {
           this.loadingUsers[uid] = $.get('/user/'+ uid)
           .done(function(data) {
-            cb(null, data.user[0]);
+            cb(null, data.user);
           })
           .fail(function() {
             console.log( "error" );
