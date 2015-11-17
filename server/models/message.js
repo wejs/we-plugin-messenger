@@ -43,7 +43,7 @@ module.exports = function Model(we) {
          */
         getUrlPath: function getUrlPath() {
           return we.router.urlTo(
-            this.__options.name.singular + '.findOne', [this.roomId, this.id]
+            this.$modelOptions.name.singular + '.findOne', [this.roomId, this.id]
           );
         }
       },
