@@ -4,9 +4,8 @@ var helpers = require('we-test-tools').helpers;
 var stubs = require('we-test-tools').stubs;
 var ioClient = require('socket.io-client');
 var async = require('async');
-var _ = require('lodash');
 var http;
-var we;
+var we, _;
 var agent;
 
 describe('messengerFeature', function() {
@@ -19,6 +18,7 @@ describe('messengerFeature', function() {
     agent = request.agent(http);
 
     we = helpers.getWe();
+    _ = we.utils._;
     we.config.acl.disabled = true;
     connectUrl = 'http://localhost:' + we.config.port;
 
@@ -141,10 +141,9 @@ describe('messengerFeature', function() {
       .end(function (err, res) {
         if (err) return done(err);
         assert(res.body.room);
-        assert( _.isArray(res.body.room) , 'room not is array');
-        assert.equal(res.body.room[0].id, room.id);
-        assert.equal(res.body.room[0].name, room.name);
-        assert.equal(res.body.room[0].description, room.description);
+        assert.equal(res.body.room.id, room.id);
+        assert.equal(res.body.room.name, room.name);
+        assert.equal(res.body.room.description, room.description);
         done();
       });
     });
@@ -170,10 +169,9 @@ describe('messengerFeature', function() {
       .end(function (err, res) {
         if (err) return done(err);
         assert(res.body.room);
-        assert( _.isArray(res.body.room) , 'room not is array');
-        assert.equal(res.body.room[0].id, room.id);
-        assert.equal(res.body.room[0].name, newRoomName);
-        assert.equal(res.body.room[0].description, room.description);
+        assert.equal(res.body.room.id, room.id);
+        assert.equal(res.body.room.name, newRoomName);
+        assert.equal(res.body.room.description, room.description);
         room.name = newRoomName;
         done();
       });
@@ -203,10 +201,9 @@ describe('messengerFeature', function() {
         if (err) throw err;
 
         assert(res.body.message);
-        assert( _.isArray(res.body.message) , 'message not is array');
         assert(res.body.meta);
-        assert(res.body.message[0].id);
-        assert.equal(res.body.message[0].content, message.content);
+        assert(res.body.message.id);
+        assert.equal(res.body.message.content, message.content);
 
         done();
       });
@@ -313,11 +310,10 @@ describe('messengerFeature', function() {
         if (err) return done(err);
 
         assert(res.body.room);
-        assert( _.isArray(res.body.room) , 'room not is array');
         assert(res.body.meta);
-        assert(res.body.room[0].id);
-        assert.equal(res.body.room[0].name, room.name);
-        assert.equal(res.body.room[0].description, room.description);
+        assert(res.body.room.id);
+        assert.equal(res.body.room.name, room.name);
+        assert.equal(res.body.room.description, room.description);
 
         done();
       });
@@ -342,10 +338,9 @@ describe('messengerFeature', function() {
       .end(function (err, res) {
         if (err) return done(err);
         assert(res.body.room);
-        assert( _.isArray(res.body.room) , 'room not is array');
-        assert.equal(res.body.room[0].id, room.id);
-        assert.equal(res.body.room[0].name, room.name);
-        assert.equal(res.body.room[0].description, room.description);
+        assert.equal(res.body.room.id, room.id);
+        assert.equal(res.body.room.name, room.name);
+        assert.equal(res.body.room.description, room.description);
         done();
       });
     });

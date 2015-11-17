@@ -8,10 +8,7 @@
     "test": "NODE_ENV=test LOG_LV=info ./node_modules/.bin/mocha test/bootstrap.js test/**/*.test.js -b ",
     "prepublish": "npm prune"
   },
-  "dependencies": {
-    "async": "^1.2.0",
-    "lodash": "^3.9.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "chance": "^0.7.4",
     "fs-extra": "^0.18.2",
