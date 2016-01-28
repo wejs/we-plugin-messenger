@@ -53,7 +53,7 @@ module.exports = {
    * @param  {Object}   res
    * @param  {Function} next
    */
-  find: function findAll(req, res, next) {
+  find: function findAll(req, res) {
 
     res.locals.query.include = [{
       model: req.we.db.models.user , as: 'members', where: {
@@ -63,8 +63,6 @@ module.exports = {
 
     return res.locals.Model.findAndCountAll(res.locals.query)
     .then(function (record) {
-      if (!record) return next();
-
       res.locals.metadata.count = record.count;
       res.locals.data = record.rows;
 
