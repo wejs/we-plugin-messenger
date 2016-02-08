@@ -1,16 +1,5 @@
-/**
- * Add Accept in all requests by default
- */
-$.ajaxPrefilter(function( options ) {
-  if ( !options.beforeSend) {
-    options.beforeSend = function (xhr) {
-      xhr.setRequestHeader('Accept', 'application/json');
 
-      // set auth token
-      if ($.cookie('weoauth')) xhr.setRequestHeader('Authorization','Bearer ' + $.cookie('weoauth'));
-    };
-  }
-});
+(function (we) {
 
 window.weMessenger = {
   contacts: {},
@@ -21,8 +10,7 @@ window.weMessenger = {
   defaultOptions: {
     avatarHost: location.origin,
     messengerHost: location.origin,
-    delayToStart: 200,
-    authCookieName: 'weoauth'
+    delayToStart: 200
   },
 
   element: null,
@@ -36,13 +24,9 @@ window.weMessenger = {
     this.users[this.user.id] = this.user;
     var self = this;
 
+    var socket= we.socket;
+
     this.element = $('#privateChat');
-
-    var authToken = $.cookie(this.options.authCookieName);
-
-    var socket = window.io.connect(this.options.messengerHost, {
-      query: 'authToken=' + authToken
-    });
 
     socket.on('messenger:private:message:created', function(data) {
 
@@ -168,3 +152,7 @@ window.weMessenger = {
 
 // window.currentUser = {{{currentUserJsonRecord}}};
 // window.contact = {{{jsonRecord}}};
+
+
+
+})(window.we);
