@@ -1,14 +1,12 @@
 {
   "name": "we-plugin-messenger",
   "description": "We.js messenger plugin",
-  "version": "0.3.11",
+  "version": "1.0.0",
   "main": "plugin.js",
   "scripts": {
     "lint": "./node_modules/.bin/jshint .",
-    "test": "NODE_ENV=test LOG_LV=info ./node_modules/.bin/mocha test/bootstrap.js test/**/*.test.js -b ",
-    "prepublish": "npm prune"
+    "test": "NODE_ENV=test LOG_LV=info ./node_modules/.bin/mocha test/bootstrap.js test/**/*.test.js -b "
   },
-  "dependencies": {},
   "devDependencies": {
     "chance": "^0.7.4",
     "fs-extra": "^0.18.2",
@@ -20,20 +18,26 @@
     "sinon": "^1.14.1",
     "socket.io-client": "^1.3.5",
     "supertest": "^1.0.1",
-    "we-core": "^0.3.27",
-    "we-plugin-contact": "^0.3.2",
-    "we-plugin-socketio": "^0.3.1",
-    "we-test-tools": "^0.3.1",
-    "we-theme-admin-default": "^0.3.1",
-    "we-theme-site-wejs": "^0.3.11"
+    "we-core": "wejs/we-core",
+    "we-plugin-contact": "wejs/we-plugin-contact",
+    "we-plugin-socketio": "wejs/we-plugin-socketio",
+    "we-test-tools": "wejs/we-test-tools"
   },
-  "publishConfig": {
-    "registry": "http://registry.npmjs.org"
-  },
-  "author": "Alberto Souza <alberto.souza.dev@gmail.com>",
+  "author": "Alberto Souza <contato@albertosouza.net>",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:wejs/we-plugin-messenger.git"
+  "repository": "wejs/we-plugin-messenger",
+  "keywords": [
+    "wejs-plugin"
+  ],
+  "wejs": {
+    "dependencies": {
+      "we-plugin-contact": true,
+      "we-plugin-socketio": true
+    },
+    "plugins": {
+      "we-plugin-contact": true,
+      "we-plugin-user": true,
+      "we-plugin-socketio": true
+    }
   }
 }
