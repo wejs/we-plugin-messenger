@@ -73,15 +73,18 @@ module.exports = function Model(we) {
 
       classMethods: {},
       instanceMethods: {
-        haveAccess: function haveAccess(user, cb) {
+        haveAccess: function haveAccess (user, cb) {
           // have access if the room is a public room
-          if (this.type == 'public') return cb(null, true);
+          if (this.type == 'public') return cb(null, true)
           // if not is public need be logged in
-          if (!user) return cb(null, false);
+          if (!user) return cb (null, false)
           // check if current user are member of this room
-          this.hasMember(user).then(function(haveAccess){
-            cb(null, haveAccess);
-          }).catch(cb);
+          return this.hasMember(user)
+          .then(function (haveAccess) {
+            cb(null, haveAccess)
+            return null
+          })
+          .catch(cb)
         },
         /**
          * Check if user is admin and return the membership
@@ -98,10 +101,14 @@ module.exports = function Model(we) {
               roomId: this.id,
               userId: user.id
             }
-          }).then(function (membership){
-            if (!membership || !membership.isAdmin) return cb(null, false);
-            cb(null, membership);
-          }).catch(cb);
+          })
+          .then(function (membership){
+            if (!membership || !membership.isAdmin) return cb(null, false)
+            cb(null, membership)
+
+            return null
+          })
+          .catch(cb)
         },
 
         /**
@@ -114,7 +121,7 @@ module.exports = function Model(we) {
             where: {
               roomId: this.id
             }
-          });
+          })
         }
       },
 
@@ -122,8 +129,10 @@ module.exports = function Model(we) {
         afterCreate: function(record, opts, next) {
           record.addMember(record.creatorId, { isAdmin: true })
           .then(function() {
-            return next();
-          }).catch(next);
+            next()
+            return null
+          })
+          .catch(next)
         }
       }
     }

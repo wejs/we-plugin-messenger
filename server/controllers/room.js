@@ -5,8 +5,6 @@
  * @description :: Contains logic for handling requests.
  */
 
-var path = require('path');
-
 module.exports = {
   /**
    * Create a private or public room
@@ -14,35 +12,33 @@ module.exports = {
    * @param  {Object} req
    * @param  {Object} res
    */
-  create: function create(req, res) {
-    if (!res.locals.template) res.locals.template = res.locals.model + '/' + 'create';
+  create: function create (req, res) {
+    if (!res.locals.template) res.locals.template = res.locals.model + '/' + 'create'
 
-    var _ = req.we.utils._;
+    var _ = req.we.utils._
 
-    if (!res.locals.data) res.locals.data = {};
-
-     _.merge(res.locals.data, req.query);
+    if (!res.locals.data) res.locals.data = {}
 
     if (req.method === 'POST') {
-      if (req.isAuthenticated()) req.body.creatorId = req.user.id;
+      if (req.isAuthenticated()) req.body.creatorId = req.user.id
 
       if (req.body.type != 'private' || req.body.type != 'public') {
         // default is public
-        req.body.type = 'public';
+        req.body.type = 'public'
       }
 
-      // set temp record for use in validation errors
-      res.locals.data = req.query;
-      _.merge(res.locals.data, req.body);
+      _.merge(res.locals.data, req.body)
 
       return res.locals.Model.create(req.body)
       .then(function (record) {
-        res.locals.data = record;
-        res.created();
-      }).catch(res.queryError);
+        res.locals.data = record
+        res.created()
+
+        return null
+      })
+      .catch(res.queryError)
     } else {
-      res.locals.data = req.query;
-      res.ok();
+      res.ok()
     }
   },
 
@@ -59,38 +55,45 @@ module.exports = {
       model: req.we.db.models.user , as: 'members', where: {
         id: req.user.id
       }
-    }];
+    }]
 
     return res.locals.Model.findAndCountAll(res.locals.query)
     .then(function (record) {
-      res.locals.metadata.count = record.count;
-      res.locals.data = record.rows;
 
-      res.ok();
-    }).catch(res.queryError);
+      res.locals.metadata.count = record.count
+      res.locals.data = record.rows
+
+      res.ok()
+
+      return null
+    })
+    .catch(res.queryError)
   },
 
   findOne: function findOne(req, res, next) {
-    if (!res.locals.data) return next();
+    if (!res.locals.data) return next()
 
     res.locals.data.haveAccess(req.user, function (err, have) {
-      if (err) return res.serverError(err);
-      if (!have) return res.forbidden();
+      if (err) return res.serverError(err)
+      if (!have) return res.forbidden()
 
-      if (!req.isAuthenticated())
-        return res.ok();
+      if (!req.isAuthenticated()) return res.ok()
 
       req.we.db.models.rooms_members.findOne({
         where: {
           userId: req.user.id,
           roomId: res.locals.id
         }
-      }).then(function  (membership){
-        res.locals.data.membership = membership;
+      })
+      .then(function (membership) {
+        res.locals.data.membership = membership
 
-        res.ok();
-      }).catch(res.queryError);
-    });
+        res.ok()
+
+        return null
+      })
+      .catch(res.queryError)
+    })
   },
 
   /**
@@ -101,30 +104,33 @@ module.exports = {
    * @param  {Object} res
    */
   edit: function edit(req, res) {
-    if (!res.locals.template) res.locals.template = res.local.model + '/' + 'edit';
+    if (!res.locals.template) res.locals.template = res.local.model + '/' + 'edit'
 
-    var record = res.locals.data;
+    var record = res.locals.data
 
-    if (!record) return res.notFound();
+    if (!record) return res.notFound()
 
     record.isAdmin(req.user, function (err, isAdmin) {
-      if (err) return res.serverError(err);
-      if (!isAdmin) return res.forbidden();
+      if (err) return res.serverError(err)
+      if (!isAdmin) return res.forbidden()
 
       if (req.we.config.updateMethods.indexOf(req.method) > -1) {
 
         if (req.body.type == 'contact') {
           // never update room of type contact
-          delete req.body.type;
+          delete req.body.type
         }
 
         record.updateAttributes(req.body)
         .then(function() {
-          res.locals.data = record;
-          return res.updated();
-        }).catch(res.queryError);
+          res.locals.data = record
+          res.updated()
+
+          return null
+        })
+        .catch(res.queryError)
       } else {
-        res.ok();
+        res.ok()
       }
     });
   },
@@ -137,76 +143,92 @@ module.exports = {
    */
   delete: function deletePage(req, res) {
     if (!res.locals.template)
-      res.locals.template = res.local.model + '/' + 'delete';
+      res.locals.template = res.local.model + '/' + 'delete'
 
     var record = res.locals.data;
-    if (!record) return res.notFound();
+    if (!record) return res.notFound()
 
     record.isAdmin(req.user, function (err, isAdmin) {
-      if (err) return res.serverError(err);
-      if (!isAdmin) return res.forbidden();
+      if (err) return res.serverError(err)
+      if (!isAdmin) return res.forbidden()
 
-      res.locals.deleteMsg = res.locals.model+'.delete.confirm.msg';
+      res.locals.deleteMsg = res.locals.model+'.delete.confirm.msg'
 
       if (req.method === 'POST' || req.method === 'DELETE') {
-        record.destroy().then(function() {
-          res.locals.deleted = true;
-          return res.deleted();
-        }).catch(res.queryError);
+        record.destroy()
+        .then(function() {
+          res.locals.deleted = true
+          res.deleted()
+
+          return null
+        })
+        .catch(res.queryError)
       } else {
-        return res.ok();
+        return res.ok()
       }
     });
   },
 
   inviteMember: function (req ,res) {
-    if (!req.isAuthenticated()) return res.forbidden();
+    if (!req.isAuthenticated()) return res.forbidden()
 
     req.we.db.models.room.findById(req.params.roomId)
     .then(function (room) {
       if (!room) return res.notFound();
       room.haveAccess(req.user, function(err, have) {
-        if (err) return res.serverError();
-        if (!have) return res.forbidden();
+        if (err) return res.serverError()
+        if (!have) return res.forbidden()
 
 
         req.we.db.models.user.findById(req.params.userId)
         .then(function (user) {
-          room.hasMember(user).then(function (have){
+          return room.hasMember(user).then(function (have){
             if (have) return res.badRequest();
 
-            room.addInvite(user).then(function(){
+            return room.addInvite(user).then(function(){
               // TODO add notification
 
-              res.ok();
-            }).catch(res.queryError);
-          }).catch(res.queryError);
+              res.ok()
 
-        }).catch(res.queryError);
-      });
-    }).catch(res.queryError);
+              return null
+            })
+          })
+        })
+        .catch(res.queryError)
+
+      })
+
+      return null
+    })
+    .catch(res.queryError)
   },
 
-  acceptMembership: function (req ,res) {
-    if (!req.isAuthenticated()) return res.forbidden();
+  acceptMembership: function (req, res) {
+    if (!req.isAuthenticated()) return res.forbidden()
 
     req.we.db.models.room.findById(req.params.roomId)
     .then(function (room) {
-      if (!room) return res.notFound();
+      if (!room) return res.notFound()
 
-      room.hasInvite(req.user).then(function (invite) {
+      return room.hasInvite(req.user)
+      .then(function (invite) {
         if (!invite) return res.notFound();
 
-        room.removeInvite(req.user).then(function() {
-          room.addMember(req.user).then(function() {
+        return room.removeInvite(req.user)
+        .then(function() {
+          return room.addMember(req.user)
+          .then(function() {
 
             // TODO add notification
 
-            res.ok();
-          }).catch(req.queryError);
-        }).catch(req.queryError);
-      }).catch(req.queryError);
-    }).catch(res.queryError);
+            res.ok()
+
+            return null
+          })
+        })
+      })
+    })
+    .catch(res.queryError);
   },
 
   /**
@@ -245,23 +267,28 @@ module.exports = {
     }).catch(res.queryError);
   },
 
-  leave: function (req ,res) {
-    if (!req.isAuthenticated()) return res.forbidden();
+  leave: function leave (req ,res) {
+    if (!req.isAuthenticated()) return res.forbidden()
 
     req.we.db.models.room.findById(req.params.roomId)
     .then(function (room) {
-      if (!room) return res.notFound();
+      if (!room) return res.notFound()
       // check if user is in room
-      room.hasMember(req.user).then(function (have){
-        if (!have) return res.notFound();
+      return room.hasMember(req.user)
+      .then(function (have) {
+        if (!have) return res.notFound()
         // then remove the user from room
-        room.removeMember(req.user).then(function(){
+        return room.removeMember(req.user)
+        .then(function(){
           // TODO send a socket.io event to alert connected room members
 
-          res.ok();
-        }).catch(req.queryError);
-      });
-    }).catch(res.queryError);
+          res.ok()
+
+          return null
+        })
+      })
+    })
+    .catch(res.queryError);
   },
 
   findMembers: function(req, res) {
@@ -276,46 +303,54 @@ module.exports = {
         room.getMembers().then(function(members){
           res.locals.data = members;
 
-          room.getMembersCount().then(function(count){
+          return room.getMembersCount()
+          .then(function(count){
             res.locals.metadata.count = count;
-            return res.ok();
-          }).catch(res.queryError);// getMembersCount
+            res.ok();
 
-        }).catch(res.queryError);// getMembers
+            return null;
+          })
+        })
+        .catch(res.queryError);// getMembers
+
+        return null;
       });
-    }).catch(res.queryError); // findById
+
+      return null;
+    })
+    .catch(res.queryError); // findById
   },
 
-  roomIframe: function roomIframe(req, res) {
-    if (!res.locals.data) return res.notFound();
+  roomIframe: function roomIframe (req, res) {
+    if (!res.locals.data) return res.notFound()
 
-    var we = req.we;
+    var we = req.we
 
-    res.locals.title = res.locals.data.name;
-    res.locals.jsonRecord = JSON.stringify(res.locals.data.toJSON());
+    res.locals.title = res.locals.data.name
+    res.locals.jsonRecord = JSON.stringify(res.locals.data.toJSON())
 
     if (!req.user || !req.user.toJSON) {
-      res.locals.currentUserJsonRecord = JSON.stringify(req.user);
+      res.locals.currentUserJsonRecord = JSON.stringify(req.user)
     } else {
-      res.locals.currentUserJsonRecord = JSON.stringify(req.user.toJSON());
+      res.locals.currentUserJsonRecord = JSON.stringify(req.user.toJSON())
     }
 
-    res.locals.showTitle = req.query.showTitle === 'true';
+    res.locals.showTitle = req.query.showTitle === 'true'
 
-    res.locals.height = Number(req.query.height) || 300;
+    res.locals.height = Number(req.query.height) || 300
 
-    res.locals.isAuthenticated = req.isAuthenticated();
+    res.locals.isAuthenticated = req.isAuthenticated()
 
     if (req.user && req.user.language) {
-      res.locals.locale = req.user.language;
+      res.locals.locale = req.user.language
     } else {
-      res.locals.locale = we.config.i18n.defaultLocale;
+      res.locals.locale = we.config.i18n.defaultLocale
     }
 
-    res.locals.layout = false;
+    res.locals.layout = false
 
-    res.locals.template = 'room';
+    res.locals.template = 'room'
 
-    res.send(req.we.view.renderTemplate(res.locals.template, res.locals.theme, res.locals));
+    res.send(req.we.view.renderTemplate(res.locals.template, res.locals.theme, res.locals))
   }
 };

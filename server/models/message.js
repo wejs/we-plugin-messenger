@@ -44,16 +44,16 @@ module.exports = function Model(we) {
         getUrlPath: function getUrlPath() {
           return we.router.urlTo(
             this.$modelOptions.name.singular + '.findOne', [this.roomId, this.id]
-          );
+          )
         }
       },
       hooks: {
         beforeCreate: function(record, options, next) {
           // set record status do salved
           if (record.status === 'sending') {
-            record.status = 'salved';
+            record.status = 'salved'
           }
-          next(null, record);
+          next(null, record)
         },
         afterCreate: function(record, options, next) {
           // socket.io now is avaible or started
@@ -62,8 +62,8 @@ module.exports = function Model(we) {
           we.io.sockets.in('room:' + record.roomId)
           .emit( 'room:message:created', {
             message: record
-          });
-          next();
+          })
+          next()
         }
       }
     }
