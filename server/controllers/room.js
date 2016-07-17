@@ -313,6 +313,9 @@ module.exports = {
     }
 
     res.locals.layout = false;
-    res.render(path.resolve(__dirname, '..', 'templates/room.hbs'));
+
+    res.locals.template = 'room';
+
+    res.send(req.we.view.renderTemplate(res.locals.template, res.locals.theme, res.locals));
   }
 };
